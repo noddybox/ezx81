@@ -20,7 +20,7 @@
 
     -------------------------------------------------------------------------
 
-    Provides a common error exit point
+    Provides the memory menu
 
 */
 static const char ident[]="$Id$";
