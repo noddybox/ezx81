@@ -1,0 +1,37 @@
+
+Requirements
+============
+
+- ANSI C compiler
+- X11 libraries and headers
+
+
+Building
+========
+
+This program does not unfortunately use the configure script, but I have been
+careful to write is as portably as possible to unix type systems (it was
+originally developed on FreeBSD 5.1)
+
+To build the software, type the following:
+
+    cd src
+    make depend
+    make
+
+Then copy the ezx81 executable wherever you want (sorry there is no install,
+but it does only generate one executable and no other dependencies).
+
+
+Other or broken systems
+=======================
+
+If the Makefile is not usable on your system, you simply need to compile all
+the .c files in the z80 directory into objects, and the compile all the
+sources in the src directory along with these objects to produce the
+executable.  E.g. (using unix style commands as an example):
+
+$ cd src/z80
+$ cc -c *.c
+$ cd ..
+$ cc -Iz80 -o ezx81 *.c z80/*.o
