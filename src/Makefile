@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.2 2003-12-17 16:55:42 ianc Exp $
+# $Id: Makefile,v 1.3 2003-12-19 01:14:08 ianc Exp $
 # 
 
 
@@ -32,12 +32,16 @@ TARGET	=	ezx81
 
 Z80LIB	=	z80/z80.a
 
-SOURCE	=	ezx81.c		\
+SOURCE	=	main.c		\
 		zx81.c		\
+		config.c	\
+		gfx.c		\
 		exit.c
 
-OBJECTS	=	ezx81.o		\
+OBJECTS	=	main.o		\
 		zx81.o		\
+		config.o	\
+		gfx.o		\
 		exit.o
 
 EMMA	=	emma

@@ -24,23 +24,23 @@
 
 */
 
-#ifndef EZX81_ZX81_H
-#define EZX81_ZX81_H "$Id$"
+#ifndef EZX81ZX81H
+#define EZX81ZX81H "$Id$"
 
 #include "z80.h"
 
 
 /* Initialise the ZX81
 */
-void	ZX81_Init(void);
+void	ZX81Init(void);
 
 /* Interfaces for the Z80
 */
-Z80Byte	ZX81_ReadMem(Z80 *z80, Z80Word addr);
-void	ZX81_WriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
-Z80Byte	ZX81_ReadPort(Z80 *z80, Z80Word port);
-void	ZX81_WritePort(Z80 *z80, Z80Word port, Z80Byte val);
-Z80Byte	ZX81_ReadForDisassem(Z80 *z80, Z80Word addr);
+Z80Byte	ZX81ReadMem(Z80 *z80, Z80Word addr);
+void	ZX81WriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
+Z80Byte	ZX81ReadPort(Z80 *z80, Z80Word port);
+void	ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val);
+Z80Byte	ZX81ReadForDisassem(Z80 *z80, Z80Word addr);
 
 
 #endif

@@ -36,10 +36,11 @@ static Z80Byte	mem[0x10000];
 
 /* ---------------------------------------- PROTOS
 */
-static Z80Byte	ReadMem(Z80 *z80, Z80Word addr);
-static void	WriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
-static Z80Byte	ReadPort(Z80 *z80, Z80Word addr);
-static void	WritePort(Z80 *z80, Z80Word addr, Z80Byte val);
+static Z80Byte		ReadMem(Z80 *z80, Z80Word addr);
+static void		WriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
+static Z80Byte		ReadPort(Z80 *z80, Z80Word addr);
+static void		WritePort(Z80 *z80, Z80Word addr, Z80Byte val);
+static const char	*Label(Z80 *z80, Z80Word addr);
 
 
 /* ---------------------------------------- MAIN
@@ -47,13 +48,32 @@ static void	WritePort(Z80 *z80, Z80Word addr, Z80Byte val);
 int main(int argc, char *argv[])
 {
     Z80 *z80;
+    FILE *fp;
+    Z80Word pc=0;
 
-    z80=Z80Init(WriteMem,ReadMem,WritePort,ReadPort);
+    z80=Z80Init(WriteMem,ReadMem,WritePort,ReadPort,ReadMem,Label);
 
     if (!z80)
     {
     	printf("Failed to initialise Z80\n");
 	return EXIT_FAILURE;
+    }
+
+    if ((fp=fopen("/files/emu/ROM/zx81.rom","rb")))
+    {
+    	fread(mem,1,0x10000,fp);
+	fclose(fp);
+    }
+
+    while(1)
+    {
+	Z80Word opc=pc;
+
+    	printf("%4.4x: ",pc);
+    	printf("%s\n",Z80Disassemble(z80,&pc));
+
+	if (pc<opc)
+	    break;
     }
 
     return EXIT_SUCCESS;
@@ -84,6 +104,15 @@ static Z80Byte ReadPort(Z80 *z80, Z80Word addr)
 static void WritePort(Z80 *z80, Z80Word addr, Z80Byte val)
 {
     printf("Wrote 0x%2.2x to port 0x%4.4x\n",(int)val,(int)addr);
+}
+
+
+static const char *Label(Z80 *z80, Z80Word addr)
+{
+    if (addr==0x0a2a)
+    	return "CLS";
+
+    return NULL;
 }
 
 

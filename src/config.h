@@ -20,29 +20,49 @@
 
     -------------------------------------------------------------------------
 
-*/
-static const char id[]="$Id$";
+    Config file
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "z80.h"
-
-
-/* ---------------------------------------- PROTOS
 */
 
+#ifndef EZX81_CONFIG_H
+#define EZX81_CONFIG_H "$Id$"
 
-/* ---------------------------------------- MAIN
+
+/* Integer settings
 */
-int main(int argc, char *argv[])
+typedef enum
 {
-    Z80 *z80;
+    CONF_FULLSCREEN,
+    CONF_MEMSIZE,
+    CONF_FRAMES_PER_SEC,
+    CONF_SCALE
+} IConfigVar;
 
-    z80=Z80Init(NULL,NULL,NULL,NULL);
 
-    return EXIT_SUCCESS;
-}
+/* String settings
+*/
+typedef enum
+{
+    CONF_ROMFILE
+} SConfigVar;
+
+
+/* Read config file
+*/
+void		ConfigRead(void);
+
+
+/* Get integer setting
+*/
+int		IConfig(IConfigVar v);
+
+
+/* Get string setting
+*/
+const char	*SConfig(SConfigVar v);
+
+
+#endif
 
 
 /* END OF FILE */
