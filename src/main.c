@@ -32,6 +32,7 @@ static const char id[]="$Id$";
 #include "zx81.h"
 #include "gfx.h"
 #include "gui.h"
+#include "memmenu.h"
 #include "config.h"
 #include "exit.h"
 
@@ -63,10 +64,13 @@ static Uint32	grey;
 int main(int argc, char *argv[])
 {
     Z80 *z80;
+    SDL_Event *e;
+    int quit;
+    int trace;
 
     ConfigRead();
 
-    ZX81Init();
+    trace=IConfig(CONF_TRACE);
 
     z80=Z80Init(ZX81WriteMem,
     		ZX81ReadMem,
@@ -77,44 +81,58 @@ int main(int argc, char *argv[])
 
     GFXInit();
 
+    ZX81Init(z80);
+
     white=GFXRGB(255,255,255);
     grey=GFXRGB(128,128,128);
     black=GFXRGB(0,0,0);
 
-    GFXClear(grey);
-    GFXPrint(1,1,black,"Quick SDL check");
-    GFXPrint(2,2,white,"Quick SDL check");
-    GFXRect(100,100,20,20,black,TRUE);
-    GFXRect(99,99,22,22,white,FALSE);
+    quit=FALSE;
 
-    GFXRect(80,80,1,1,black,TRUE);
-    GFXRect(80,90,1,1,black,FALSE);
-
-    GFXRect(90,80,2,2,black,TRUE);
-    GFXRect(90,90,2,2,black,FALSE);
-
-    GFXRect(100,80,3,3,black,TRUE);
-    GFXRect(100,90,3,3,black,FALSE);
-
-    GFXHLine(0,319,0,white);
-    GFXVLine(0,1,199,black);
-
+    while(!quit)
     {
-    int f;
+	Z80SingleStep(z80);
 
-    for(f=0;f<10;f++)
-    {
-    	GFXPlot(rand()%320,rand()%200,white);
-	GFXEndFrame(FALSE);
-    }
-    }
+	if (trace)
+	{
+	    DisplayState(z80);
+	    GFXEndFrame(FALSE);
+	}
 
-    GUIMessage("Test Message","Hello\nWorld\n%s",SConfig(CONF_TAPEDIR));
+	while((e=GFXGetKey()))
+	{
+	    switch (e->key.keysym.sym)
+	    {
+	    	case SDLK_ESCAPE:
+		    if (e->key.state==SDL_RELEASED)
+			quit=TRUE;
+		    break;
+
+		case SDLK_F11:
+		    if (e->key.state==SDL_RELEASED)
+		    	MemoryMenu(z80);
+		    break;
+
+		case SDLK_F12:
+		    if (e->key.state==SDL_RELEASED)
+		    	trace=!trace;
+		    break;
+
+		default:
+		    ZX81KeyEvent(e);
+		    break;
+	    }
+	}
+    }
 
     SDL_Quit();
 
     return EXIT_SUCCESS;
 }
+
+
+/* ---------------------------------------- PRIVATE FUNCTIONS
+*/
 
 
 /* END OF FILE */

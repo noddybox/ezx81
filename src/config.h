@@ -35,7 +35,8 @@ typedef enum
     CONF_FULLSCREEN,
     CONF_MEMSIZE,
     CONF_FRAMES_PER_SEC,
-    CONF_SCALE
+    CONF_SCALE,
+    CONF_TRACE
 } IConfigVar;
 
 

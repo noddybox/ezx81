@@ -29,6 +29,7 @@ static const char ident[]="$Id$";
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "gui.h"
 #include "gfx.h"
@@ -79,7 +80,7 @@ static void Centre(const char *p, int y, int r, int g, int b)
 */
 void GUIMessage(const char *title, const char *format,...)
 {
-    char buff[257];
+    char buff[1025];
     va_list va;
     char *p;
     int no;
@@ -119,6 +120,13 @@ void GUIMessage(const char *title, const char *format,...)
 
     width=(width*8)+16;
     height=(no+3)*10;
+
+    if (width>(SCR_W-10))
+    	width=SCR_W-10;
+
+    if (height>(SCR_H-10))
+    	height=SCR_H-10;
+
     y=(SCR_H-height)/2;
     x=(SCR_W-width)/2;
 
@@ -143,6 +151,59 @@ void GUIMessage(const char *title, const char *format,...)
     GFXWaitKey();
 
     free(line);
+}
+
+
+const char *GUIInputString(const char *prompt, const char *orig)
+{
+    static const int y_pos=SCR_H-8;
+    static char buff[41];
+    size_t len;
+    int done=FALSE;
+    SDL_Event *e;
+
+    buff[0]=0;
+    strncat(buff,orig,40);
+    len=strlen(buff);
+
+    while(!done)
+    {
+    	GFXRect(0,y_pos,SCR_W,8,GFXRGB(0,0,0),TRUE);
+	GFXPrint(0,y_pos,GFXRGB(255,255,255),"%s %s%c",prompt,buff,FONT_CURSOR);
+	GFXEndFrame(FALSE);
+
+	e=GFXWaitKey();
+
+	switch(e->key.keysym.sym)
+	{
+	    case SDLK_RETURN:
+	    case SDLK_KP_ENTER:
+	    	done=TRUE;
+		break;
+
+	    case SDLK_ESCAPE:
+		buff[0]=0;
+		len=0;
+	    	break;
+
+	    case SDLK_BACKSPACE:
+	    case SDLK_DELETE:
+	    	if (len)
+		    buff[--len]=0;
+
+		break;
+
+	    default:
+	    	if (len<40 && isprint(e->key.keysym.sym))
+		{
+		    buff[len++]=(char)e->key.keysym.sym;
+		    buff[len]=0;
+		}
+		break;
+	}
+    }
+
+    return buff;
 }
 
 

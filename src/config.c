@@ -50,6 +50,7 @@ static int	fullscreen=FALSE;
 static int	memsize=16;
 static int	frames=50;
 static int	scale=1;
+static int	trace=0;
 
 static const struct
 {
@@ -63,6 +64,7 @@ static const struct
 		{"memsize",	&memsize,	TRUE},
 		{"frames",	&frames,	TRUE},
 		{"scale",	&scale,		TRUE},
+		{"trace",	&trace,		TRUE},
 		{NULL,		NULL,		FALSE}
 	    };
 
@@ -151,7 +153,8 @@ int IConfig(IConfigVar v)
 		    &fullscreen,
 		    &memsize,
 		    &frames,
-		    &scale
+		    &scale,
+		    &trace
 		};
 
     return *vars[v];

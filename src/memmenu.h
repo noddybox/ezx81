@@ -20,36 +20,24 @@
 
     -------------------------------------------------------------------------
 
-    Provides the emulation for the ZX81
+    Provides a menu driven interface for analysing memory
 
 */
 
-#ifndef EZX81ZX81H
-#define EZX81ZX81H "$Id$"
+#ifndef EZX81_MEMMENU_H
+#define EZX81_MEMMENU_H "$Id$"
 
 #include "z80.h"
-#include "SDL.h"
 
 
-/* Initialise the ZX81
+/* Memory menu
 */
-void	ZX81Init(Z80 *z80);
+void	MemoryMenu(Z80 *z80);
 
-/* Handle keypresses
-*/
-void	ZX81KeyEvent(SDL_Event *e);
 
-/* Interfaces for the Z80
+/* Display the state of the ZX81 at the bottom of the screen
 */
-Z80Byte	ZX81ReadMem(Z80 *z80, Z80Word addr);
-void	ZX81WriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
-Z80Byte	ZX81ReadPort(Z80 *z80, Z80Word port);
-void	ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val);
-Z80Byte	ZX81ReadForDisassem(Z80 *z80, Z80Word addr);
-
-/* Interfaces for memory menu
-*/
-const char	*ZX81Info(Z80 *z80);
+void	DisplayState(Z80 *z80);
 
 
 #endif

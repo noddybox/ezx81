@@ -77,6 +77,11 @@ void		GFXStartFrame(void);
 void		GFXEndFrame(int delay);
 
 
+/* Set key repeat
+*/
+void		GFXKeyRepeat(int repeat);
+
+
 /* Suck out keyboard events.  Returns NULL if no more keyboard events
 */
 SDL_Event	*GFXGetKey(void);
@@ -123,6 +128,13 @@ void		GFXVLine(int x, int y1, int y2, Uint32 col);
    format is longer than 256 characters.
 */
 void		GFXPrint(int x, int y, Uint32 col, const char *format, ...);
+
+
+/* As above, but draws text using the supplied background colour, rather
+   than transparently.
+*/
+void		GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
+			      const char *format, ...);
 
 
 #endif

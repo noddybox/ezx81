@@ -225,6 +225,16 @@ void GFXEndFrame(int delay)
 }
 
 
+void GFXKeyRepeat(int repeat)
+{
+    if (repeat)
+    	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY,
+			    SDL_DEFAULT_REPEAT_INTERVAL);
+    else
+    	SDL_EnableKeyRepeat(0,0);
+}
+
+
 SDL_Event *GFXGetKey(void)
 {
     static SDL_Event e;
@@ -246,7 +256,7 @@ SDL_Event *GFXWaitKey(void)
     do
     {
     	SDL_WaitEvent(&e);
-    } while (e.type!=SDL_KEYUP);
+    } while (e.type!=SDL_KEYDOWN);
 
     return &e;
 }
@@ -330,6 +340,46 @@ void GFXPrint(int x, int y, Uint32 col, const char *format, ...)
 		{
 		    if (font[(int)*p][sx+sy*8] && x+sx<SCR_W)
 			putpixel(x+sx,y+sy,col);
+		}
+	    }
+	}
+
+	p++;
+	x+=8;
+    }
+
+    UNLOCK;
+}
+
+
+void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
+		   const char *format, ...)
+{
+    char buff[257];
+    va_list va;
+    char *p;
+    int sx,sy;
+
+    va_start(va,format);
+    vsprintf(buff,format,va);
+    va_end(va);
+
+    p=buff;
+
+    LOCK;
+
+    while(*p)
+    {
+	for(sy=0;sy<8;sy++)
+	{
+	    if (y+sy<SCR_H && x<SCR_W)
+	    {
+		for(sx=0;sx<8;sx++)
+		{
+		    if (font[(int)*p][sx+sy*8] && x+sx<SCR_W)
+			putpixel(x+sx,y+sy,col);
+		    else
+			putpixel(x+sx,y+sy,paper);
 		}
 	    }
 	}
