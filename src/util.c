@@ -116,7 +116,8 @@ void Debug(const char *format, ...)
 
     if (!fp)
     {
-    	fp=fopen("debug.txt","w");
+    	/*fp=fopen("debug.txt","w");*/
+	fp=stdout;
 	setbuf(fp,NULL);
     }
 

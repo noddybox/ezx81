@@ -32,6 +32,7 @@ static const char ident[]="$Id$";
 #include "gfx.h"
 #include "gui.h"
 #include "config.h"
+#include "util.h"
 #include "exit.h"
 
 static const char ident_h[]=EZX81_ZX81H;
@@ -350,11 +351,13 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 
     Z80GetState(z80,&state);
 
-    /* Extra check due to out dodgy ULA emulation
+    /* Extra check due to dodgy ULA emulation
     */
     if (ULA.y>=0 && ULA.y<SCR_H)
     {
 	Uint32 fg,bg;
+
+	GFXLock();
 
     	/* Position on screen corresponding to ULA
 	*/
@@ -382,10 +385,12 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 	for(b=0;b<8;b++)
 	{
 	    if (mem[base]&(1<<(7-b)))
-	    	GFXPlot(x+b,y,fg);
+	    	GFXFastPlot(x+b,y,fg);
 	    else
-	    	GFXPlot(x+b,y,bg);
+	    	GFXFastPlot(x+b,y,bg);
 	}
+
+	GFXUnlock();
     }
 
     ULA.x=(ULA.x+1)&0x1f;
@@ -401,14 +406,15 @@ static int CheckTimers(Z80 *z80, Z80Val val)
     {
 	Z80ResetCycles(z80,val-HSYNC_PERIOD);
 
-	if (nmigen && hsync)
+	if (nmigen)
 	{
 	    Z80NMI(z80);
-	    /*printf("NMIGEN\n");*/
+	    Debug("NMIGEN\n");
 	}
-	else if (hsync)
+
+	if (hsync)
 	{
-	    printf("HSYNC\n");
+	    Debug("HSYNC\n");
 	    if (ULA.release)
 	    {
 	    	/* ULA.release=FALSE; */
@@ -417,6 +423,20 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 		ULA.x=0;
 	    }
 	}
+    }
+
+    return TRUE;
+}
+
+
+static int Halt(Z80 *z80, Z80Val val)
+{
+    Debug("HALT=%d\n",val);
+
+    if (val && !nmigen && !hsync)
+    {
+	GUIMessage(eMessageBox,"EMULATOR BUG!",
+		   "HALT without NMI or HSYNC\ngenerator active");
     }
 
     return TRUE;
@@ -450,6 +470,7 @@ void ZX81Init(Z80 *z80)
     RomPatch();
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
+    Z80LodgeCallback(z80,eZ80_Halt,Halt);
 
     /* Mirror the ROM
     */
@@ -584,7 +605,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 {
     Z80Byte b=0;
 
-    printf("IN  %4.4x\n",port);
+    Debug("IN  %4.4x\n",port);
 
     switch(port&0xff)
     {
@@ -624,7 +645,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 	    */
 	    if (!nmigen && hsync)
 	    {
-		printf("HSYNC OFF\n");
+		Debug("HSYNC OFF\n");
 	    	hsync=FALSE;
 
 		GFXEndFrame(TRUE);
@@ -656,7 +677,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 
 void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
-    printf("OUT %4.4x\n",port);
+    Debug("OUT %4.4x\n",port);
 
     /* Any port write releases the ULA line counter
     */
@@ -665,17 +686,17 @@ void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
     switch(port&0xff)
     {
     	case 0xfd:	/* NMI generator OFF */
-	    printf("NMIGEN OFF\n");
+	    Debug("NMIGEN OFF\n");
 	    nmigen=FALSE;
 	    break;
 
 	case 0xfe:	/* NMI generator ON */
-	    printf("NMIGEN ON\n");
+	    Debug("NMIGEN ON\n");
 	    nmigen=TRUE;
 	    break;
 
 	case 0xff:	/* HSYNC generator ON */
-	    printf("HSYNC ON\n");
+	    Debug("HSYNC ON\n");
 	    hsync=TRUE;
 	    Z80ResetCycles(z80,0);
 	    break;
@@ -693,9 +714,9 @@ const char *ZX81Info(Z80 *z80)
 {
     static char buff[80];
 
-    sprintf(buff,"NMI: %s  HS: %s  ULA: (%d,%d,%d,%d)",
-		    nmigen ? "ON":"OFF",
-		    hsync ? "ON":"OFF",
+    sprintf(buff,"NMI: %s HS: %s  ULA: (%d,%d,%d,%d)",
+		    nmigen ? "ON ":"OFF",
+		    hsync ? "ON ":"OFF",
 		    ULA.x,ULA.y,ULA.c,ULA.release);
 
     return buff;
