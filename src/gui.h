@@ -20,47 +20,23 @@
 
     -------------------------------------------------------------------------
 
-    Config file
+    Basic GUI routines
 
 */
 
-#ifndef EZX81_CONFIG_H
-#define EZX81_CONFIG_H "$Id$"
+#ifndef EZX81_GUI_H
+#define EZX81_GUI_H "$Id$"
+
+#include "SDL.h"
 
 
-/* Integer settings
+/* ---------------------------------------- INTERFACES
 */
-typedef enum
-{
-    CONF_FULLSCREEN,
-    CONF_MEMSIZE,
-    CONF_FRAMES_PER_SEC,
-    CONF_SCALE
-} IConfigVar;
 
-
-/* String settings
+/* Display a simple message box.  A message of longer than 256 bytes causes
+   undefined behaviour.  Newlines cause a line break.
 */
-typedef enum
-{
-    CONF_ROMFILE,
-    CONF_TAPEDIR
-} SConfigVar;
-
-
-/* Read config file
-*/
-void		ConfigRead(void);
-
-
-/* Get integer setting
-*/
-int		IConfig(IConfigVar v);
-
-
-/* Get string setting
-*/
-const char	*SConfig(SConfigVar v);
+void	GUIMessage(const char *title, const char *format,...);
 
 
 #endif

@@ -31,6 +31,7 @@ static const char id[]="$Id$";
 #include "z80.h"
 #include "zx81.h"
 #include "gfx.h"
+#include "gui.h"
 #include "config.h"
 #include "exit.h"
 
@@ -83,27 +84,32 @@ int main(int argc, char *argv[])
     GFXClear(grey);
     GFXPrint(1,1,black,"Quick SDL check");
     GFXPrint(2,2,white,"Quick SDL check");
-    GFXRect(100,100,20,20,white,TRUE);
+    GFXRect(100,100,20,20,black,TRUE);
     GFXRect(99,99,22,22,white,FALSE);
+
+    GFXRect(80,80,1,1,black,TRUE);
+    GFXRect(80,90,1,1,black,FALSE);
+
+    GFXRect(90,80,2,2,black,TRUE);
+    GFXRect(90,90,2,2,black,FALSE);
+
+    GFXRect(100,80,3,3,black,TRUE);
+    GFXRect(100,90,3,3,black,FALSE);
 
     GFXHLine(0,319,0,white);
     GFXVLine(0,1,199,black);
 
     {
-    SDL_Event e;
     int f;
 
-    for(f=0;f<1000;f++)
+    for(f=0;f<10;f++)
     {
     	GFXPlot(rand()%320,rand()%200,white);
 	GFXEndFrame(FALSE);
     }
-
-    do
-    {
-    	SDL_WaitEvent(&e);
-    } while(e.type!=SDL_KEYUP);
     }
+
+    GUIMessage("Test Message","Hello\nWorld\n%s",SConfig(CONF_TAPEDIR));
 
     SDL_Quit();
 

@@ -72,8 +72,19 @@ void		GFXStartFrame(void);
 
 /* Indicate a frame is done and refreshes the screen
    If delay is TRUE, sleeps to implement the frames_per_sec config.
+   It's safe to call this multiple times without a matching GFXStartFrame().
 */
 void		GFXEndFrame(int delay);
+
+
+/* Suck out keyboard events.  Returns NULL if no more keyboard events
+*/
+SDL_Event	*GFXGetKey(void);
+
+
+/* Wait for a keypress (key up event)
+*/
+SDL_Event	*GFXWaitKey(void);
 
 
 /*

@@ -20,7 +20,7 @@
 
     -------------------------------------------------------------------------
 
-    Config file
+    Wrapper to SDL
 
 */
 static const char ident[]="$Id$";
@@ -171,8 +171,6 @@ void GFXInit(void)
     if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
 	Exit("Failed to init SDL: %s\n",SDL_GetError());
 
-    printf("scale = %d\n",scale);
-
     if (!(surface=SDL_SetVideoMode(SCR_W*scale,
 				   SCR_H*scale,
 				   0,
@@ -224,6 +222,33 @@ void GFXEndFrame(int delay)
 	if (diff<frame)
 	    SDL_Delay(frame-diff);
     }
+}
+
+
+SDL_Event *GFXGetKey(void)
+{
+    static SDL_Event e;
+
+    while(SDL_PollEvent(&e))
+    {
+    	if (e.type==SDL_KEYUP || e.type==SDL_KEYDOWN)
+	    return &e;
+    }
+
+    return NULL;
+}
+
+
+SDL_Event *GFXWaitKey(void)
+{
+    static SDL_Event e;
+
+    do
+    {
+    	SDL_WaitEvent(&e);
+    } while (e.type!=SDL_KEYUP);
+
+    return &e;
 }
 
 

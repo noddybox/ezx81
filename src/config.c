@@ -44,7 +44,8 @@ static const char ident_h[]=EZX81_CONFIG_H;
 
 /* ---------------------------------------- CONFIG
 */
-static char	rompath[FILENAME_MAX]="zx81.rom";
+static char	rompath[FILENAME_MAX]="./zx81.rom";
+static char	tapedir[FILENAME_MAX]=".";
 static int	fullscreen=FALSE;
 static int	memsize=16;
 static int	frames=50;
@@ -57,6 +58,7 @@ static const struct
     int		is_int;
 } config[]= {
 		{"rompath",	rompath,	FALSE},
+		{"tapedir",	tapedir,	FALSE},
 		{"fullscreen",	&fullscreen,	TRUE},
 		{"memsize",	&memsize,	TRUE},
 		{"frames",	&frames,	TRUE},
@@ -160,7 +162,8 @@ const char *SConfig(SConfigVar v)
 {
     static const char *vars[]=
     		{
-		    rompath
+		    rompath,
+		    tapedir
 		};
 
     return vars[v];
