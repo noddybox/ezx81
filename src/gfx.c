@@ -75,13 +75,15 @@ static Uint32		ticks;
 static Uint32		frame;
 static int		scale;
 
+static void		(*putpixel)(int x, int y, Uint32 col);
+
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
 
 /* Taken from SDL documentation
 */
-static void putpixel(int x, int y, Uint32 pixel)
+static void normal_putpixel(int x, int y, Uint32 pixel)
 {
     int bpp;
     Uint8 *p;
@@ -120,6 +122,19 @@ static void putpixel(int x, int y, Uint32 pixel)
 }
 
 
+static void scale_putpixel(int x, int y, Uint32 pixel)
+{
+    int sx,sy;
+
+    x*=scale;
+    y*=scale;
+
+    for(sx=0;sx<scale;sx++)
+	for(sy=0;sy<scale;sy++)
+	    normal_putpixel(x+sx,y+sy,pixel);
+}
+
+
 static void DoHLine(int x1, int x2, int y, Uint32 col)
 {
     for(;x1<=x2;x1++)
@@ -138,19 +153,34 @@ static void DoVLine(int x, int y1, int y2, Uint32 col)
 */
 void GFXInit(void)
 {
-    scale=IConfig(CONF_SCALE);
+    if (IConfig(CONF_FULLSCREEN))
+	scale=1;
+    else
+	scale=IConfig(CONF_SCALE);
 
     if (scale<0)
     	scale=1;
+
+    if (scale>1)
+    	putpixel=scale_putpixel;
+    else
+    	putpixel=normal_putpixel;
 
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
     if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
 	Exit("Failed to init SDL: %s\n",SDL_GetError());
 
-    if (!(surface=SDL_SetVideoMode
-		(SCR_W,SCR_H,0,IConfig(CONF_FULLSCREEN) ? SDL_FULLSCREEN : 0)))
+    printf("scale = %d\n",scale);
+
+    if (!(surface=SDL_SetVideoMode(SCR_W*scale,
+				   SCR_H*scale,
+				   0,
+				   IConfig(CONF_FULLSCREEN) ?
+				   		SDL_FULLSCREEN : 0)))
+    {
 	Exit("Failed to open video: %s\n",SDL_GetError());
+    }
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_WM_SetCaption("eZX81","eZX81");
@@ -215,19 +245,19 @@ void GFXRect(int x, int y, int w, int h, Uint32 col, int solid)
     {
 	SDL_Rect r;
 
-	r.x=x;
-	r.y=y;
-	r.w=w;
-	r.h=h;
+	r.x=x*scale;
+	r.y=y*scale;
+	r.w=w*scale;
+	r.h=h*scale;
 
 	SDL_FillRect(surface,&r,col);
     }
     else
     {
-	DoHLine(x,x+w,y,col);
-	DoHLine(x,x+w,y+h,col);
-	DoVLine(x,y,y+h,col);
-	DoVLine(x+w,y,y+h,col);
+	DoHLine(x,x+w-1,y,col);
+	DoHLine(x,x+w-1,y+h-1,col);
+	DoVLine(x,y,y+h-1,col);
+	DoVLine(x+w-1,y,y+h-1,col);
     }
 
     UNLOCK;
