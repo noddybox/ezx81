@@ -34,7 +34,7 @@ static const char ident[]="$Id$";
 #include "config.h"
 #include "exit.h"
 
-static const char ident_h[]=EZX81ZX81H;
+static const char ident_h[]=EZX81_ZX81H;
 
 #ifndef TRUE
 #define TRUE 1
@@ -401,9 +401,11 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	if (nmigen)
 	{
 	    Z80NMI(z80,0xff);
+	    printf("NMIGEN\n");
 	}
 	else if (hsync)
 	{
+	    printf("HSYNC\n");
 	    if (ULA.release)
 	    {
 	    	/* ULA.release=FALSE; */

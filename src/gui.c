@@ -55,10 +55,30 @@ static const char ident_h[]=EZX81_GUI_H;
 
 /* ---------------------------------------- STATICS
 */
+static Uint32	white;
+static Uint32	black;
+static Uint32	pale;
+static Uint32	red;
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static void Init()
+{
+    static int init=FALSE;
+
+    if (init)
+    	return;
+
+    init=TRUE;
+
+    white=GFXRGB(255,255,255);
+    black=GFXRGB(0,0,0);
+    pale=GFXRGB(200,200,200);
+    red=GFXRGB(255,100,100);
+}
+
+
 static void *Malloc(size_t size)
 {
     void *p=malloc(size);
@@ -70,9 +90,9 @@ static void *Malloc(size_t size)
 }
 
 
-static void Centre(const char *p, int y, int r, int g, int b)
+static void Centre(const char *p, int y, Uint32 col)
 {
-    GFXPrint((SCR_W-strlen(p)*8)/2,y,GFXRGB(r,g,b),"%s",p);
+    GFXPrint((SCR_W-strlen(p)*8)/2,y,col,"%s",p);
 }
 
 
@@ -89,6 +109,8 @@ void GUIMessage(const char *title, const char *format,...)
     int width;
     int height;
     int x,y;
+
+    Init();
 
     va_start(va,format);
     vsprintf(buff,format,va);
@@ -130,21 +152,16 @@ void GUIMessage(const char *title, const char *format,...)
     y=(SCR_H-height)/2;
     x=(SCR_W-width)/2;
 
-    GFXRect(x-1,y-1,
-	    width+2,height+2,
-	    GFXRGB(255,255,255),FALSE);
+    GFXRect(x-1,y-1,width+2,height+2,white,FALSE);
+    GFXRect(x,y,width,height,black,TRUE);
 
-    GFXRect(x,y,
-	    width,height,
-	    GFXRGB(0,0,0),TRUE);
-
-    Centre(title,y+2,255,255,255);
-    GFXHLine(x+2,x+width-4,y+10,GFXRGB(255,255,255));
+    Centre(title,y+2,white);
+    GFXHLine(x+2,x+width-4,y+10,white);
 
     for(f=0;f<no;f++)
-    	Centre(line[f],y+5+10*(f+1),200,200,200);
+    	Centre(line[f],y+5+10*(f+1),pale);
 
-    Centre("Press a key",y+height-10,255,0,0);
+    Centre("Press a key",y+height-10,red);
 
     GFXEndFrame(FALSE);
 
@@ -162,14 +179,16 @@ const char *GUIInputString(const char *prompt, const char *orig)
     int done=FALSE;
     SDL_Event *e;
 
+    Init();
+
     buff[0]=0;
     strncat(buff,orig,40);
     len=strlen(buff);
 
     while(!done)
     {
-    	GFXRect(0,y_pos,SCR_W,8,GFXRGB(0,0,0),TRUE);
-	GFXPrint(0,y_pos,GFXRGB(255,255,255),"%s %s%c",prompt,buff,FONT_CURSOR);
+    	GFXRect(0,y_pos,SCR_W,8,black,TRUE);
+	GFXPrint(0,y_pos,white,"%s %s%c",prompt,buff,FONT_CURSOR);
 	GFXEndFrame(FALSE);
 
 	e=GFXWaitKey();

@@ -24,8 +24,8 @@
 
 */
 
-#ifndef EZX81ZX81H
-#define EZX81ZX81H "$Id$"
+#ifndef EZX81_ZX81H
+#define EZX81_ZX81H "$Id$"
 
 #include "z80.h"
 #include "SDL.h"
