@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.8 2004-01-22 02:38:13 ianc Exp $
+# $Id: Makefile,v 1.9 2004-01-23 20:05:54 ianc Exp $
 # 
 
 
@@ -114,7 +114,8 @@ zx81.o: /usr/local/include/SDL/SDL_keyboard.h
 zx81.o: /usr/local/include/SDL/SDL_keysym.h
 zx81.o: /usr/local/include/SDL/SDL_mouse.h /usr/local/include/SDL/SDL_video.h
 zx81.o: /usr/local/include/SDL/SDL_mutex.h /usr/local/include/SDL/SDL_quit.h
-zx81.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h config.h exit.h
+zx81.o: /usr/local/include/SDL/SDL_version.h gfx.h gui.h config.h util.h
+zx81.o: exit.h
 config.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 config.o: /usr/include/sys/_types.h /usr/include/machine/_types.h
 config.o: /usr/include/stdio.h /usr/include/string.h /usr/include/strings.h

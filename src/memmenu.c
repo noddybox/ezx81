@@ -219,8 +219,8 @@ int DisplayZ80State(Z80State *s, int y, Uint32 col)
 		  s->I,s->IM,s->R);
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
-    		  "IFF1=%2.2x  IFF2=%2.2x  CY=%8.8x",
-		  s->IFF1,s->IFF2,s->cycle);
+    		  "IFF1=%2.2x  IFF2=%2.2x",
+		  s->IFF1,s->IFF2);
 
     return y+8;
 }

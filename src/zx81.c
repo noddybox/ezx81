@@ -351,13 +351,11 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 
     Z80GetState(z80,&state);
 
-    /* Extra check due to dodgy ULA emulation
+    /* Extra check due to out dodgy ULA emulation
     */
     if (ULA.y>=0 && ULA.y<SCR_H)
     {
 	Uint32 fg,bg;
-
-	GFXLock();
 
     	/* Position on screen corresponding to ULA
 	*/
@@ -385,12 +383,10 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 	for(b=0;b<8;b++)
 	{
 	    if (mem[base]&(1<<(7-b)))
-	    	GFXFastPlot(x+b,y,fg);
+	    	GFXPlot(x+b,y,fg);
 	    else
-	    	GFXFastPlot(x+b,y,bg);
+	    	GFXPlot(x+b,y,bg);
 	}
-
-	GFXUnlock();
     }
 
     ULA.x=(ULA.x+1)&0x1f;
@@ -406,13 +402,12 @@ static int CheckTimers(Z80 *z80, Z80Val val)
     {
 	Z80ResetCycles(z80,val-HSYNC_PERIOD);
 
-	if (nmigen)
+	if (nmigen && hsync)
 	{
 	    Z80NMI(z80);
 	    Debug("NMIGEN\n");
 	}
-
-	if (hsync)
+	else if (hsync)
 	{
 	    Debug("HSYNC\n");
 	    if (ULA.release)
@@ -429,14 +424,14 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 }
 
 
-static int Halt(Z80 *z80, Z80Val val)
+static int CheckHalt(Z80 *z80, Z80Val val)
 {
-    Debug("HALT=%d\n",val);
-
-    if (val && !nmigen && !hsync)
+    if (val)
     {
-	GUIMessage(eMessageBox,"EMULATOR BUG!",
-		   "HALT without NMI or HSYNC\ngenerator active");
+	if (!nmigen && !hsync)
+	    GUIMessage(eMessageBox,"POSSIBLE BUG",
+		       "Executed HALT while NMI generator\n"
+		       "and HSYNC generator off");
     }
 
     return TRUE;
@@ -470,7 +465,7 @@ void ZX81Init(Z80 *z80)
     RomPatch();
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
-    Z80LodgeCallback(z80,eZ80_Halt,Halt);
+    Z80LodgeCallback(z80,eZ80_Halt,CheckHalt);
 
     /* Mirror the ROM
     */
@@ -714,9 +709,9 @@ const char *ZX81Info(Z80 *z80)
 {
     static char buff[80];
 
-    sprintf(buff,"NMI: %s HS: %s  ULA: (%d,%d,%d,%d)",
-		    nmigen ? "ON ":"OFF",
-		    hsync ? "ON ":"OFF",
+    sprintf(buff,"NMI: %s  HS: %s  ULA: (%d,%d,%d,%d)",
+		    nmigen ? "ON":"OFF",
+		    hsync ? "ON":"OFF",
 		    ULA.x,ULA.y,ULA.c,ULA.release);
 
     return buff;
@@ -731,9 +726,14 @@ void ZX81EnableScreen(int enable)
 
 void ZX81Reset(Z80 *z80)
 {
+    int f;
+
     scr_enable=TRUE;
     nmigen=FALSE;
     hsync=FALSE;
+
+    for(f=0;f<8;f++)
+    	matrix[f]=0;
 
     GFXStartFrame();
 }
