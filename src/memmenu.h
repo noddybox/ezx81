@@ -30,14 +30,19 @@
 #include "z80.h"
 
 
-/* Memory menu
+/* Memory menu.  Returns TRUE if exit (from program) selected.
 */
-void	MemoryMenu(Z80 *z80);
+int		MemoryMenu(Z80 *z80);
 
 
-/* Display the state of the ZX81 at the bottom of the screen
+/* Display the state of the SPEC at the bottom of the screen
 */
-void	DisplayState(Z80 *z80);
+void		DisplayState(Z80 *z80);
+
+
+/* Non-NULL (the breakpoint hit) if a breakpoint has been hit
+*/
+const char	*Break(void);
 
 
 #endif

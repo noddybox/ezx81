@@ -51,21 +51,21 @@ static const int	ROMLEN=0x2000;
 static const int	ROM_SAVE=0x2fc;
 static const int	ROM_LOAD=0x347;
 
-/* No of cycles in each 64us HSYNC (hopefully)
+/* No of T-states in each 64us HSYNC (hopefully)
 */
-static const int	HSYNC_PERIOD=321;
+static const Z80Val	HSYNC_PERIOD=321;
 
 /* The ZX81 screen
 */
-static const int	SCR_W=256;
-static const int	SCR_H=192;
-static const int	TXT_W=32;
-static const int	TXT_H=24;
+static int		scr_enable=TRUE;
 
-/* These assume a 320x200 screen
-*/
-static const int	OFF_X=(320-256)/2;
-static const int	OFF_Y=(200-192)/2;
+#define	SCR_W		256
+#define	SCR_H		192
+#define	TXT_W		32
+#define	TXT_H		24
+
+#define OFF_X		(GFX_WIDTH-SCR_W)/2
+#define OFF_Y		(GFX_HEIGHT-SCR_H)/2
 
 static Z80Byte		mem[0x10000];
 
@@ -249,7 +249,7 @@ static void LoadTape(Z80State *state)
 
     if (strlen(p)==0)
     {
-    	GUIMessage("ERROR","Can't load empty filename");
+    	GUIMessage(eMessageBox,"ERROR","Can't load empty filename");
 	return;
     }
 
@@ -260,7 +260,7 @@ static void LoadTape(Z80State *state)
 
     if (!(fp=fopen(path,"rb")))
     {
-    	GUIMessage("ERROR","Can't load file:\n%s",path);
+    	GUIMessage(eMessageBox,"ERROR","Can't load file:\n%s",path);
 	return;
     }
 
@@ -288,7 +288,7 @@ static void SaveTape(Z80State *state)
 
     if (strlen(p)==0)
     {
-    	GUIMessage("ERROR","Can't save empty filename");
+    	GUIMessage(eMessageBox,"ERROR","Can't save empty filename");
 	return;
     }
 
@@ -299,7 +299,7 @@ static void SaveTape(Z80State *state)
 
     if (!(fp=fopen(path,"wb")))
     {
-    	GUIMessage("ERROR","Can't write file:\n%s",path);
+    	GUIMessage(eMessageBox,"ERROR","Can't write file:\n%s",path);
 	return;
     }
 
@@ -344,6 +344,9 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
     int x,y;
     int inv;
     int b;
+
+    if (!scr_enable)
+    	return;
 
     Z80GetState(z80,&state);
 
@@ -396,12 +399,12 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 {
     if (val>HSYNC_PERIOD)
     {
-	Z80ResetCycles(z80,0);
+	Z80ResetCycles(z80,val-HSYNC_PERIOD);
 
-	if (nmigen)
+	if (nmigen && hsync)
 	{
-	    Z80NMI(z80,0xff);
-	    printf("NMIGEN\n");
+	    Z80NMI(z80);
+	    /*printf("NMIGEN\n");*/
 	}
 	else if (hsync)
 	{
@@ -429,22 +432,24 @@ void ZX81Init(Z80 *z80)
 
     if (!(fp=fopen(SConfig(CONF_ROMFILE),"rb")))
     {
-	GUIMessage("ERROR","Failed to open ZX81 ROM\n%s",SConfig(CONF_ROMFILE));
+	GUIMessage(eMessageBox,
+		   "ERROR","Failed to open ZX81 ROM\n%s",SConfig(CONF_ROMFILE));
 	Exit("");
     }
 
     if (fread(mem,1,ROMLEN,fp)!=ROMLEN)
     {
     	fclose(fp);
-	GUIMessage("ERROR","ROM file must be %d bytes long\n",ROMLEN);
+	GUIMessage(eMessageBox,
+		   "ERROR","ROM file must be %d bytes long\n",ROMLEN);
 	Exit("");
     }
 
     /* Patch the ROM
     */
     RomPatch();
-    Z80LodgeCallback(z80,Z80_EDHook,EDCallback);
-    Z80LodgeCallback(z80,Z80_Fetch,CheckTimers);
+    Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
+    Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
 
     /* Mirror the ROM
     */
@@ -544,12 +549,34 @@ Z80Byte ZX81ReadMem(Z80 *z80, Z80Word addr)
 }
 
 
+Z80Word ZX81ReadWord(Z80 *z80, Z80Word addr)
+{
+    Z80Word l,h;
+
+    l=ZX81ReadMem(z80,addr);
+    h=ZX81ReadMem(z80,addr+1);
+    return (h<<8)|l;
+}
+
+
 void ZX81WriteMem(Z80 *z80, Z80Word addr, Z80Byte val)
 {
     addr=addr&0x7fff;
 
     if (addr>=RAMBOT && addr<=RAMTOP)
 	mem[addr]=val;
+}
+
+
+void ZX81WriteWord(Z80 *z80, Z80Word addr, Z80Word val)
+{
+    if (addr>=RAMBOT && addr<=RAMTOP)
+	mem[addr]=val&0xff;
+
+    addr++;
+
+    if (addr>=RAMBOT && addr<=RAMTOP)
+	mem[addr]=val>>8;
 }
 
 
@@ -597,6 +624,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 	    */
 	    if (!nmigen && hsync)
 	    {
+		printf("HSYNC OFF\n");
 	    	hsync=FALSE;
 
 		GFXEndFrame(TRUE);
@@ -637,14 +665,17 @@ void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
     switch(port&0xff)
     {
     	case 0xfd:	/* NMI generator OFF */
+	    printf("NMIGEN OFF\n");
 	    nmigen=FALSE;
 	    break;
 
 	case 0xfe:	/* NMI generator ON */
+	    printf("NMIGEN ON\n");
 	    nmigen=TRUE;
 	    break;
 
 	case 0xff:	/* HSYNC generator ON */
+	    printf("HSYNC ON\n");
 	    hsync=TRUE;
 	    Z80ResetCycles(z80,0);
 	    break;
@@ -662,11 +693,28 @@ const char *ZX81Info(Z80 *z80)
 {
     static char buff[80];
 
-    sprintf(buff,"NMIGEN: %s  HSYNC: %s",
+    sprintf(buff,"NMI: %s  HS: %s  ULA: (%d,%d,%d,%d)",
 		    nmigen ? "ON":"OFF",
-		    hsync ? "ON":"OFF");
+		    hsync ? "ON":"OFF",
+		    ULA.x,ULA.y,ULA.c,ULA.release);
 
     return buff;
+}
+
+
+void ZX81EnableScreen(int enable)
+{
+    scr_enable=enable;
+}
+
+
+void ZX81Reset(Z80 *z80)
+{
+    scr_enable=TRUE;
+    nmigen=FALSE;
+    hsync=FALSE;
+
+    GFXStartFrame();
 }
 
 

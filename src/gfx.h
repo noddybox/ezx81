@@ -41,6 +41,11 @@
 #define FONT_CURSOR		'\007'
 #define FONT_COPYRIGHT		'\010'
 
+/* The size of the display
+*/
+#define GFX_WIDTH		320
+#define GFX_HEIGHT		200
+
 
 /* ---------------------------------------- INTERFACES
 */
@@ -87,15 +92,31 @@ void		GFXKeyRepeat(int repeat);
 SDL_Event	*GFXGetKey(void);
 
 
-/* Wait for a keypress (key up event)
+/* Wait for a keypress.  Note that key up events are returned.
 */
 SDL_Event	*GFXWaitKey(void);
+
+
+/* Lock the screen for updates
+*/
+void		GFXLock(void);
+
+
+/* Unlock the screen following updates
+*/
+void		GFXUnlock(void);
 
 
 /*
     Note that no bound checking (except for GFXPrint()) is done - it is the
     callers responsibility to plot onscreen.
 */
+
+/* Plot a point without locking.  GFXLock() and GFXUnlock() MUST surround
+   calls to this
+*/
+void		GFXFastPlot(int x, int y, Uint32 col);
+
 
 /* Plot a point
 */

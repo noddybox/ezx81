@@ -50,9 +50,6 @@ static const char ident_fh[]=EZX81_FONT_H;
 #define FALSE 0
 #endif
 
-#define SCR_W	320
-#define SCR_H	200
-
 #define LOCK	do							\
 		{							\
 		    if (SDL_MUSTLOCK(surface))				\
@@ -171,8 +168,8 @@ void GFXInit(void)
     if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
 	Exit("Failed to init SDL: %s\n",SDL_GetError());
 
-    if (!(surface=SDL_SetVideoMode(SCR_W*scale,
-				   SCR_H*scale,
+    if (!(surface=SDL_SetVideoMode(GFX_WIDTH*scale,
+				   GFX_HEIGHT*scale,
 				   0,
 				   IConfig(CONF_FULLSCREEN) ?
 				   		SDL_FULLSCREEN : 0)))
@@ -182,6 +179,8 @@ void GFXInit(void)
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_WM_SetCaption("eZX81","eZX81");
+
+    atexit(SDL_Quit);
 }
 
 
@@ -262,6 +261,18 @@ SDL_Event *GFXWaitKey(void)
 }
 
 
+void GFXLock(void)
+{
+    LOCK;
+}
+
+
+void GFXUnlock(void)
+{
+    UNLOCK;
+}
+
+
 void GFXPlot(int x, int y, Uint32 col)
 {
     LOCK;
@@ -269,6 +280,12 @@ void GFXPlot(int x, int y, Uint32 col)
     putpixel(x,y,col);
 
     UNLOCK;
+}
+
+
+void GFXFastPlot(int x, int y, Uint32 col)
+{
+    putpixel(x,y,col);
 }
 
 
@@ -334,11 +351,11 @@ void GFXPrint(int x, int y, Uint32 col, const char *format, ...)
     {
 	for(sy=0;sy<8;sy++)
 	{
-	    if (y+sy<SCR_H && x<SCR_W)
+	    if (y+sy<GFX_HEIGHT && x<GFX_WIDTH)
 	    {
 		for(sx=0;sx<8;sx++)
 		{
-		    if (font[(int)*p][sx+sy*8] && x+sx<SCR_W)
+		    if (font[(int)*p][sx+sy*8] && x+sx<GFX_WIDTH)
 			putpixel(x+sx,y+sy,col);
 		}
 	    }
@@ -372,11 +389,11 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
     {
 	for(sy=0;sy<8;sy++)
 	{
-	    if (y+sy<SCR_H && x<SCR_W)
+	    if (y+sy<GFX_HEIGHT && x<GFX_WIDTH)
 	    {
 		for(sx=0;sx<8;sx++)
 		{
-		    if (font[(int)*p][sx+sy*8] && x+sx<SCR_W)
+		    if (font[(int)*p][sx+sy*8] && x+sx<GFX_WIDTH)
 			putpixel(x+sx,y+sy,col);
 		    else
 			putpixel(x+sx,y+sy,paper);

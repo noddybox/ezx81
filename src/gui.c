@@ -33,10 +33,10 @@ static const char ident[]="$Id$";
 
 #include "gui.h"
 #include "gfx.h"
+#include "util.h"
 #include "exit.h"
 
 static const char ident_h[]=EZX81_GUI_H;
-
 
 /* ---------------------------------------- MACROS
 */
@@ -48,57 +48,185 @@ static const char ident_h[]=EZX81_GUI_H;
 #define FALSE 0
 #endif
 
-/* Must match gfx.c
-*/
-#define SCR_W	320
-#define SCR_H	200
+#define WHITE	GFXRGB(255,255,255)
+#define BLACK	GFXRGB(0,0,0)
+#define RED	GFXRGB(255,100,100)
+#define GREY	GFXRGB(160,160,160)
+#define LOGREY	GFXRGB(100,100,100)
+#define GREEN	GFXRGB(100,255,100)
 
 /* ---------------------------------------- STATICS
 */
-static Uint32	white;
-static Uint32	black;
-static Uint32	pale;
-static Uint32	red;
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
-static void Init()
+static void Trim(char *p,size_t len)
 {
-    static int init=FALSE;
-
-    if (init)
-    	return;
-
-    init=TRUE;
-
-    white=GFXRGB(255,255,255);
-    black=GFXRGB(0,0,0);
-    pale=GFXRGB(200,200,200);
-    red=GFXRGB(255,100,100);
-}
-
-
-static void *Malloc(size_t size)
-{
-    void *p=malloc(size);
-
-    if (!p)
-    	Exit("malloc failed for %lu bytes\n",(unsigned long)size);
-
-    return p;
+    if (strlen(p)>len)
+    {
+    	p[len]=0;
+    	p[len-1]='.';
+    	p[len-2]='.';
+    }
 }
 
 
 static void Centre(const char *p, int y, Uint32 col)
 {
-    GFXPrint((SCR_W-strlen(p)*8)/2,y,col,"%s",p);
+    GFXPrint((GFX_WIDTH-strlen(p)*8)/2,y,col,"%s",p);
+}
+
+
+static void Box(const char *title, int x, int y, int width, int height)
+{
+    GFXRect(x+1,y+1,
+	    width-2,height-2,
+	    BLACK,TRUE);
+
+    GFXRect(x+1,y+1,
+	    width-2,11,
+	    LOGREY,TRUE);
+
+    GFXRect(x,y,
+	    width,height,
+	    GREY,FALSE);
+
+    Centre(title,y+2,GREEN);
+    GFXHLine(x,x+width-1,y+11,GREY);
+}
+
+
+static int DoList(const char *title, int no, char * const list[], int *option)
+{
+    static const int max=GFX_HEIGHT/8-8;
+    SDL_Event *e;
+    int top;
+    int cur;
+    int done;
+    int f;
+
+    if (no==0)
+    	return -1;
+
+    top=0;
+    cur=0;
+
+    done=FALSE;
+
+    while(!done)
+    {
+	Box(title,7,7,GFX_WIDTH-14,GFX_HEIGHT-14);
+
+	if (option)
+	{
+	    Centre("Cursors to move, RETURN to accept",
+	    		GFX_HEIGHT-44,WHITE);
+	    Centre("SPACE toggles, I inverts all",
+	    		GFX_HEIGHT-36,WHITE);
+	    Centre("S select all, C clear all",
+	    		GFX_HEIGHT-28,WHITE);
+	}
+	else
+	    Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
+
+	Centre("ESCAPE to cancel",GFX_HEIGHT-20,WHITE);
+
+	for(f=0;f<max;f++)
+	{
+	    if (f+top<no)
+	    {
+		Uint32 pen,paper;
+
+		if (f+top==cur)
+		{
+		    pen=WHITE;
+		    paper=RED;
+		}
+		else
+		{
+		    pen=GREY;
+		    paper=BLACK;
+		}
+
+		if (option)
+		    GFXPrintPaper(16,20+f*8,pen,paper,"%c %-34.34s",
+				  option[f+top] ? FONT_TICK:' ',list[f+top]);
+		else
+		    GFXPrintPaper(16,20+f*8,pen,paper,"%-36.36s",list[f+top]);
+	    }
+	}
+
+	GFXEndFrame(FALSE);
+
+	e=GFXWaitKey();
+
+	switch(e->key.keysym.sym)
+	{
+	    case SDLK_RETURN:
+	    	done=TRUE;
+		break;
+
+	    case SDLK_SPACE:
+	    	if (option)
+		    option[cur]=!option[cur];
+		break;
+
+	    case SDLK_i:
+	    	if (option)
+		    for(f=0;f<no;f++)
+			option[f]=!option[f];
+		break;
+
+	    case SDLK_s:
+	    	if (option)
+		    for(f=0;f<no;f++)
+			option[f]=TRUE;
+		break;
+
+	    case SDLK_c:
+	    	if (option)
+		    for(f=0;f<no;f++)
+			option[f]=FALSE;
+		break;
+
+	    case SDLK_ESCAPE:
+		cur=-1;
+	    	done=TRUE;
+	    	break;
+
+	    case SDLK_UP:
+		if (cur>0)
+		{
+		    cur--;
+
+		    if (cur<top)
+		    	top=cur;
+		}
+	    	break;
+
+	    case SDLK_DOWN:
+		if (cur<no-1)
+		{
+		    cur++;
+
+		    if (cur>top+max-2)
+		    	top=cur-max+2;
+		}
+		break;
+
+	    default:
+		break;
+	}
+    }
+
+    return cur;
 }
 
 
 /* ---------------------------------------- EXPORTED INTERFACES
 */
-void GUIMessage(const char *title, const char *format,...)
+int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
 {
     char buff[1025];
     va_list va;
@@ -109,8 +237,9 @@ void GUIMessage(const char *title, const char *format,...)
     int width;
     int height;
     int x,y;
+    int ret;
 
-    Init();
+    ret=FALSE;
 
     va_start(va,format);
     vsprintf(buff,format,va);
@@ -129,66 +258,96 @@ void GUIMessage(const char *title, const char *format,...)
 
     line=Malloc(sizeof *line * no);
 
+    width=16;
+
     line[0]=strtok(buff,"\n");
-    width=strlen(line[0]);
+    Trim(line[0],38);
+
+    if (strlen(line[0])>width)
+	width=strlen(line[0]);
 
     for(f=1;f<no;f++)
     {
     	line[f]=strtok(NULL,"\n");
+	Trim(line[f],38);
 
 	if (strlen(line[f])>width)
 	    width=strlen(line[f]);
     }
 
-    width=(width*8)+16;
-    height=(no+3)*10;
+    width=(width*8)+18;
+    height=(no+5)*10;
 
-    if (width>(SCR_W-10))
-    	width=SCR_W-10;
+    if (width>(GFX_WIDTH-10))
+    	width=GFX_WIDTH-10;
 
-    if (height>(SCR_H-10))
-    	height=SCR_H-10;
+    if (height>(GFX_HEIGHT-10))
+    	height=GFX_HEIGHT-10;
 
-    y=(SCR_H-height)/2;
-    x=(SCR_W-width)/2;
+    y=(GFX_HEIGHT-height)/2;
+    x=(GFX_WIDTH-width)/2;
 
-    GFXRect(x-1,y-1,width+2,height+2,white,FALSE);
-    GFXRect(x,y,width,height,black,TRUE);
-
-    Centre(title,y+2,white);
-    GFXHLine(x+2,x+width-4,y+10,white);
+    Box(title,x,y,width,height);
 
     for(f=0;f<no;f++)
-    	Centre(line[f],y+5+10*(f+1),pale);
+    	Centre(line[f],y+5+10*(f+1),WHITE);
 
-    Centre("Press a key",y+height-10,red);
+    if (type==eMessageBox)
+	Centre("Press a key",y+height-12,RED);
+    else
+	Centre("Press Y/N",y+height-12,RED);
 
     GFXEndFrame(FALSE);
 
-    GFXWaitKey();
+    if (type==eYesNoBox)
+    {
+	SDL_Event *e;
+
+	while(TRUE)
+	{
+	    e=GFXWaitKey();
+
+	    if (e->key.keysym.sym==SDLK_y)
+	    {
+	    	ret=TRUE;
+		break;
+	    }
+	    else if (e->key.keysym.sym==SDLK_n)
+	    {
+	    	ret=FALSE;
+		break;
+	    }
+	}
+    }
+    else
+	GFXWaitKey();
+
 
     free(line);
+
+    return ret;
 }
 
 
 const char *GUIInputString(const char *prompt, const char *orig)
 {
-    static const int y_pos=SCR_H-8;
+    static const int y_pos=GFX_HEIGHT-8;
     static char buff[41];
     size_t len;
     int done=FALSE;
+    unsigned char c;
     SDL_Event *e;
-
-    Init();
 
     buff[0]=0;
     strncat(buff,orig,40);
     len=strlen(buff);
 
+    SDL_EnableUNICODE(1);
+
     while(!done)
     {
-    	GFXRect(0,y_pos,SCR_W,8,black,TRUE);
-	GFXPrint(0,y_pos,white,"%s %s%c",prompt,buff,FONT_CURSOR);
+    	GFXRect(0,y_pos,GFX_WIDTH,8,BLACK,TRUE);
+	GFXPrint(0,y_pos,WHITE,"%s %s%c",prompt,buff,FONT_CURSOR);
 	GFXEndFrame(FALSE);
 
 	e=GFXWaitKey();
@@ -213,16 +372,52 @@ const char *GUIInputString(const char *prompt, const char *orig)
 		break;
 
 	    default:
-	    	if (len<40 && isprint(e->key.keysym.sym))
+		c=(unsigned char)e->key.keysym.unicode;
+
+	    	if (len<40 && isprint(c))
 		{
-		    buff[len++]=(char)e->key.keysym.sym;
+		    buff[len++]=c;
 		    buff[len]=0;
 		}
 		break;
 	}
     }
 
+    SDL_EnableUNICODE(0);
+
     return buff;
+}
+
+
+int GUIListSelect(const char *title, int no, char * const list[])
+{
+    return DoList(title,no,list,NULL);
+}
+
+
+int GUIListOption(const char *title, int no, char * const list[], int option[])
+{
+    int *o;
+    int sel;
+    int f;
+
+    if (no==0)
+    	return FALSE;
+
+    o=Malloc(no * sizeof *o);
+
+    for(f=0;f<no;f++)
+    	o[f]=option[f];
+
+    sel=DoList(title,no,list,o);
+
+    if (sel!=-1)
+    	for(f=0;f<no;f++)
+	    option[f]=o[f];
+
+    free(o);
+
+    return sel!=-1;
 }
 
 

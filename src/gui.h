@@ -33,15 +33,39 @@
 /* ---------------------------------------- INTERFACES
 */
 
-/* Display a simple message box.  A message of longer than 1024 bytes causes
-   undefined behaviour.  Newlines cause a line break.
+/* Message types
 */
-void		GUIMessage(const char *title, const char *format,...);
+typedef enum {eMessageBox, eYesNoBox} GUIBoxType;
+
+/* Display a simple message box.  A message of longer than 1024 bytes causes
+   undefined behaviour.  Newlines cause a line break.  If a line is over 38
+   characters then it will be truncated.
+
+   If type is eYesNoBox then TRUE/FALSE is returned depending on whether
+   yes/no was selected.
+*/
+int		GUIMessage(GUIBoxType type,
+			   const char *title,
+			   const char *format,...);
 
 
 /* Enter a string, max 40 characters
 */
 const char	*GUIInputString(const char *prompt, const char *orig);
+
+
+/* Selects an entry from a list.  Returns the index selected, or
+   -1 if cancelled.
+*/
+int		GUIListSelect(const char *title, int no, char * const list[]);
+
+
+/* Allows options to be toggled in a list.  Returns FALSE for cancelled (in
+   which case option will be as it was.  TRUE if accepted, and option will be
+   updated.
+*/
+int		GUIListOption(const char *title,
+			      int no, char * const list[], int option[]);
 
 
 #endif
