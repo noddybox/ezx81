@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.5 2003-12-22 00:01:31 ianc Exp $
+# $Id: Makefile,v 1.6 2003-12-22 23:31:04 ianc Exp $
 # 
 
 
@@ -48,8 +48,6 @@ OBJECTS	=	main.o		\
 		memmenu.o	\
 		exit.o
 
-EMMA	=	emma
-
 CFLAGS +=	-Iz80 `sdl-config --cflags`
 
 LIBS	=	$(Z80LIB) `sdl-config --libs`
@@ -58,18 +56,15 @@ LIBS	=	$(Z80LIB) `sdl-config --libs`
 $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
-$(EMMA): $(EMMA).o $(Z80LIB)
-	$(CC) $(CFLAGS) -o $(EMMA) $(EMMA).o $(Z80LIB)
-
 $(Z80LIB): z80/*.[ch]
 	cd z80; make ; cd ..
 
 clean:
-	rm -f $(TARGET) $(EMMA) $(EMMA).o $(OBJECTS) core
+	rm -f $(TARGET) $(OBJECTS) core
 	cd z80; make clean; cd ..
 
 depend:
-	makedepend  -- $(CFLAGS) -- $(SOURCE) $(EMMA).c
+	makedepend  -- $(CFLAGS) -- $(SOURCE)
 	if test -e Makefile ; then rm -f Makefile.bak ; fi
 	cd z80; make depend ; cd ..
 
