@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.1.1.1 2003-12-17 01:36:18 ianc Exp $
+# $Id: Makefile,v 1.2 2003-12-17 16:55:42 ianc Exp $
 # 
 
 
@@ -32,17 +32,23 @@ TARGET	=	ezx81
 
 Z80LIB	=	z80/z80.a
 
-SOURCE	=	ezx81.c	
+SOURCE	=	ezx81.c		\
+		zx81.c		\
+		exit.c
 
-OBJECTS	=	ezx81.o	
+OBJECTS	=	ezx81.o		\
+		zx81.o		\
+		exit.o
 
 EMMA	=	emma
 
-CFLAGS +=	-Iz80
+CFLAGS +=	-Iz80 `sdl-config --cflags`
+
+LIBS	=	$(Z80LIB) `sdl-config --libs`
 
 
 $(TARGET): $(OBJECTS) $(Z80LIB)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(Z80LIB)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 $(EMMA): $(EMMA).o $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(EMMA) $(EMMA).o $(Z80LIB)
@@ -51,7 +57,7 @@ $(Z80LIB): z80/*.[ch]
 	cd z80; make ; cd ..
 
 clean:
-	rm -f $(TARGET) $(OBJECTS) core
+	rm -f $(TARGET) $(EMMA) $(EMMA).o $(OBJECTS) core
 	cd z80; make clean; cd ..
 
 depend:
