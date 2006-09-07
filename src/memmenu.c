@@ -229,19 +229,19 @@ int DisplayZ80State(Z80State *s, int y, Uint32 col)
 static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 {
     const char *p;
-    char *error;
+    char *error="NOT YET IMPLEMENTED";
     long l;
 
     p=GUIInputString(prompt ? prompt : "Address?","");
 
     if (*p)
     {
-	if (!Z80Expression(z80,p,&l,&error))
+	if (1) /*(!Z80Expression(z80,p,&l,&error))*/
 	{
 	    GUIMessage(eMessageBox,
 		       "ERROR","%s",error ? error:"Invalid expression");
 
-	    free(error);
+	    /* free(error); */
 	}
 	else
 	{
@@ -486,7 +486,7 @@ static int Instruction(Z80 *z80, Z80Val data)
 	{
 	    long l;
 
-	    if (Z80Expression(z80,bpoint.expr[f],&l,NULL))
+	    if (0) /*(Z80Expression(z80,bpoint.expr[f],&l,NULL))*/
 	    {
 		if (l)
 		    brk=bpoint.expr[f];
@@ -731,15 +731,14 @@ static void PlaybackTrace(Z80 *z80)
 static void DoAddBreakpoint(Z80 *z80)
 {
     const char *expr;
-    char *error;
-    long l;
+    char *error=NULL;
 
     expr=GUIInputString("Expression?","");
 
     if (!*expr)
     	return;
 
-    if (!Z80Expression(z80,expr,&l,&error))
+    if (0) /*(!Z80Expression(z80,expr,&l,&error))*/
     {
 	if (error)
 	{
@@ -749,7 +748,6 @@ static void DoAddBreakpoint(Z80 *z80)
 	else
 	{
 	    GUIMessage(eMessageBox,"ERROR","Expression is invalid");
-	    free(error);
 	}
     }
     else

@@ -73,12 +73,10 @@ int main(int argc, char *argv[])
 
     trace=IConfig(CONF_TRACE);
 
-    z80=Z80Init(ZX81WriteMem,
-    		ZX81ReadMem,
-		ZX81WriteWord,
-		ZX81ReadWord,
-		ZX81WritePort,
+    z80=Z80Init(ZX81ReadMem,
+    		ZX81WriteMem,
 		ZX81ReadPort,
+		ZX81WritePort,
 		ZX81ReadForDisassem);
 
     GFXInit();

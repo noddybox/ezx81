@@ -537,11 +537,6 @@ Z80Byte ZX81ReadMem(Z80 *z80, Z80Word addr)
     {
 	Z80Byte b;
 
-        /* B6 of R is tied to the IRQ line (only when HSYNC active?)
-        if ((HSYNC)&&(!(z80->R&0x40)))
-            z80->IRQ=TRUE;
-        */
-
         b=mem[addr&0x7fff];
 
         /* If bit 6 of the opcode is set the opcode is sent as is to the
@@ -565,34 +560,12 @@ Z80Byte ZX81ReadMem(Z80 *z80, Z80Word addr)
 }
 
 
-Z80Word ZX81ReadWord(Z80 *z80, Z80Word addr)
-{
-    Z80Word l,h;
-
-    l=ZX81ReadMem(z80,addr);
-    h=ZX81ReadMem(z80,addr+1);
-    return (h<<8)|l;
-}
-
-
 void ZX81WriteMem(Z80 *z80, Z80Word addr, Z80Byte val)
 {
     addr=addr&0x7fff;
 
     if (addr>=RAMBOT && addr<=RAMTOP)
 	mem[addr]=val;
-}
-
-
-void ZX81WriteWord(Z80 *z80, Z80Word addr, Z80Word val)
-{
-    if (addr>=RAMBOT && addr<=RAMTOP)
-	mem[addr]=val&0xff;
-
-    addr++;
-
-    if (addr>=RAMBOT && addr<=RAMTOP)
-	mem[addr]=val>>8;
 }
 
 
