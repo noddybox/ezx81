@@ -2290,7 +2290,13 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0xd3:	/* OUT (n),A */
 	    TSTATE(11);
 	    if (cpu->pwrite)
-	    	cpu->pwrite(cpu,FETCH_BYTE,cpu->AF.b[HI]);
+	    {
+		Z80Word port;
+
+		port=FETCH_BYTE;
+		port|=(Z80Word)cpu->AF.b[HI]<<8;
+	    	cpu->pwrite(cpu,port,cpu->AF.b[HI]);
+	    }
 	    else
 	    	cpu->PC++;
 	    break;
