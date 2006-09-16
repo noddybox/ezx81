@@ -2329,7 +2329,13 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0xdb:	/* IN A,(n) */
 	    TSTATE(11);
 	    if (cpu->pread)
-		cpu->AF.b[HI]=cpu->pread(cpu,FETCH_BYTE);
+	    {
+		Z80Word port;
+
+		port=FETCH_BYTE;
+		port|=(Z80Word)cpu->AF.b[HI]<<8;
+		cpu->AF.b[HI]=cpu->pread(cpu,port);
+	    }
 	    else
 	    	cpu->PC++;
 	    break;
