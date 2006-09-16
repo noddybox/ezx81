@@ -78,6 +78,7 @@ static Z80Word		RAMLEN=0;
 */
 static int		nmigen=FALSE;
 static int		hsync=FALSE;
+static int		vsync=FALSE;
 
 /* The ULA
 */
@@ -390,9 +391,6 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
     }
 
     ULA.x=(ULA.x+1)&0x1f;
-
-    if (ULA.x==0)
-    	Z80Interrupt(z80,0xff);
 }
 
 
@@ -410,6 +408,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	else if (hsync)
 	{
 	    Debug("HSYNC\n");
+	    Z80Interrupt(z80,0xff);
 	    if (ULA.release)
 	    {
 	    	/* ULA.release=FALSE; */
@@ -608,13 +607,11 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 		    break;
 	    }
 
-	    /* Turn off HSYNC if NMI generator is OFF and redraw screen to
-	       match output ULA has since sent out.
+	    /* Turn on VSYNC if not on
 	    */
-	    if (!nmigen && hsync)
+	    if (!vsync)
 	    {
-		Debug("HSYNC OFF\n");
-	    	hsync=FALSE;
+		Debug("VSYNC\n");
 
 		GFXEndFrame(TRUE);
 		GFXClear(white);
@@ -625,6 +622,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 		ULA.release=FALSE;
 
 		GFXStartFrame();
+		vsync=TRUE;
 	    }
 	    else
 	    {
@@ -632,6 +630,14 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 		*/
 		ULA.c=0;
 		ULA.release=FALSE;
+	    }
+
+	    /* If NMI on, turn off the HSYNC generator
+	    */
+	    if (!nmigen)
+	    {
+		Debug("HSYNC OFF\n");
+	    	hsync=FALSE;
 	    }
 	    break;
 
@@ -645,7 +651,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 
 void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
-    Debug("OUT %4.4x\n",port);
+    Debug("OUT %4.4x,%2.2X\n",port,val);
 
     /* Any port write releases the ULA line counter
     */
@@ -659,8 +665,9 @@ void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 	    break;
 
 	case 0xfe:	/* NMI generator ON */
-	    Debug("NMIGEN ON\n");
+	    Debug("NMIGEN ON/VSYNC OFF\n");
 	    nmigen=TRUE;
+	    vsync=FALSE;
 	    break;
 
 	case 0xff:	/* HSYNC generator ON */
