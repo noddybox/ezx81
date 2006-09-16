@@ -112,11 +112,16 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 /* ---------------------------------------- INTERFACES
 */
 
-Z80	*Z80Init(Z80ReadMemory read_memory,
-		 Z80WriteMemory write_memory,
-		 Z80ReadPort read_port,
-		 Z80WritePort write_port,
-		 Z80ReadMemory read_disassem)
+#ifdef ENABLE_ARRAY_MEMORY
+Z80     *Z80Init(Z80ReadPort read_port,
+                 Z80WritePort write_port)
+#else
+Z80     *Z80Init(Z80ReadMemory read_memory,
+                 Z80WriteMemory write_memory,
+                 Z80ReadPort read_port,
+                 Z80WritePort write_port,
+                 Z80ReadMemory read_for_disassem)
+#endif
 {
     Z80 *cpu;
     int f;
@@ -124,18 +129,22 @@ Z80	*Z80Init(Z80ReadMemory read_memory,
 
     InitTables();
 
+#ifndef ENABLE_ARRAY_MEMORY
     if (!read_memory || !write_memory)
     	return NULL;
+#endif
 
     cpu=malloc(sizeof *cpu);
 
     if (cpu)
     {
+#ifndef ENABLE_ARRAY_MEMORY
 	cpu->mread=read_memory;
 	cpu->mwrite=write_memory;
+	cpu->disread=read_for_disassem;
+#endif
 	cpu->pread=read_port;
 	cpu->pwrite=write_port;
-	cpu->disread=read_disassem;
 
 	for(f=0;f<eZ80_NO_CALLBACK;f++)
 	    for(r=0;r<MAX_PER_CALLBACK;r++)
@@ -336,6 +345,7 @@ void Z80SetLabels(Z80Label labels[])
 const char *Z80Disassemble(Z80 *cpu, Z80Word *pc)
 {
 #ifdef ENABLE_DISASSEM
+    Z80Byte Z80_Dis_FetchByte(Z80 *cpu, Z80Word *pc);
     static char s[80];
     Z80Word opc,npc;
     Z80Byte op;
@@ -350,7 +360,13 @@ const char *Z80Disassemble(Z80 *cpu, Z80Word *pc)
     strcat(s,Z80_Dis_Printf("%-40s ;",Z80_Dis_GetArg()));
 
     for(f=0;f<5 && opc!=npc;f++)
+    {
+#ifdef ENABLE_ARRAY_MEMORY
+	strcat(s,Z80_Dis_Printf(" %.2x",(int)Z80_MEMORY[opc++]));
+#else
 	strcat(s,Z80_Dis_Printf(" %.2x",(int)cpu->disread(cpu,opc++)));
+#endif
+    }
 
     if (opc!=npc)
 	for(f=1;f<3;f++)

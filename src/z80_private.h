@@ -29,6 +29,8 @@
 #ifndef Z80_PRIVATE_H
 #define Z80_PRIVATE_H "$Id$"
 
+#include "z80_config.h"
+
 #ifndef TRUE
 #define TRUE	1
 #endif
@@ -85,10 +87,12 @@ struct Z80
     Z80Byte		devbyte;
     int			nmi;
 
+#ifndef ENABLE_ARRAY_MEMORY
     Z80ReadMemory	disread;
 
     Z80ReadMemory	mread;
     Z80WriteMemory	mwrite;
+#endif
 
     Z80ReadPort		pread;
     Z80WritePort	pwrite;
@@ -97,6 +101,14 @@ struct Z80
 
     int			last_cb;
 };
+
+
+/* ---------------------------------------- ARRAY MEMORY
+*/
+
+#ifdef ENABLE_ARRAY_MEMORY
+extern Z80Byte	Z80_MEMORY[];
+#endif
 
 
 /* ---------------------------------------- MACROS
@@ -115,7 +127,8 @@ struct Z80
 								\
 			for(f=0;f<MAX_PER_CALLBACK;f++)		\
 			    if (cpu->callback[r][f])		\
-				cpu->callback[r][f](cpu,d);	\
+				cpu->last_cb &=			\
+				    cpu->callback[r][f](cpu,d);	\
 			} while(0)
 
 /* Flag register
@@ -138,6 +151,38 @@ struct Z80
 #define SETFLAG(f)		SET(cpu->AF.b[LO],f)
 #define CLRFLAG(f)		CLR(cpu->AF.b[LO],f)
 
+#ifdef ENABLE_ARRAY_MEMORY
+
+#define PEEK(addr)		Z80_MEMORY[addr]
+
+static inline Z80Word PEEKW(Z80Word addr)
+{
+    return (PEEK(addr) | (Z80Word)PEEK(addr+1)<<8);
+}
+
+#define POKE(addr,val)		do					\
+				{					\
+				    Z80Word ba=addr;			\
+				    if (ba>=RAMBOT && ba<=RAMTOP)	\
+				    	Z80_MEMORY[ba]=val;		\
+				} while(0)
+
+#define POKEW(addr,val)		do					\
+				{					\
+				    Z80Word wa=addr;			\
+				    Z80Word wv=val;			\
+				    POKE(wa,wv);			\
+				    POKE(wa+1,wv>>8);			\
+				} while(0)
+
+
+#define FETCH_BYTE		(Z80_MEMORY[cpu->PC++])
+#define FETCH_WORD              (cpu->PC+=2,				\
+				    Z80_MEMORY[cpu->PC-2]|		\
+					((Z80Word)Z80_MEMORY[cpu->PC-1]<<8))
+
+#else
+
 #define PEEK(addr)		(cpu->mread(cpu,addr))
 #define PEEKW(addr)		FPEEKW(cpu,addr)
 
@@ -146,6 +191,9 @@ struct Z80
 
 #define FETCH_BYTE		(cpu->mread(cpu,cpu->PC++))
 #define FETCH_WORD		(cpu->PC+=2,FPEEKW(cpu,cpu->PC-2))
+
+#endif
+
 
 #define IS_C			(cpu->AF.b[LO]&C_Z80)
 #define IS_N			(cpu->AF.b[LO]&N_Z80)
@@ -164,6 +212,18 @@ struct Z80
 #define ADD_R(v)		cpu->R=((cpu->R&0x80)|((cpu->R+(v))&0x7f))
 #define INC_R			ADD_R(1)
 
+#ifdef ENABLE_ARRAY_MEMORY
+
+#define PUSH(REG)		do					\
+				{					\
+				    Z80Word pv=REG;			\
+				    cpu->SP-=2;				\
+				    POKE(cpu->SP,pv);			\
+				    POKE(cpu->SP+1,pv>>8);		\
+				} while(0)
+
+#else
+
 #define PUSH(REG)		do					\
 				{					\
 				    Z80Word pushv=REG;			\
@@ -171,6 +231,7 @@ struct Z80
 				    cpu->mwrite(cpu,cpu->SP,pushv);	\
 				    cpu->mwrite(cpu,cpu->SP+1,pushv>>8);\
 				} while(0)
+#endif
 
 #define POP(REG)		do					\
 				{					\
@@ -207,15 +268,6 @@ struct Z80
 /* ---------------------------------------- LABELS
 */
 extern Z80Label			*z80_labels;
-
-
-/* ---------------------------------------- FLAG TABLES
-*/
-extern Z80Byte			PSZtable[512];
-extern Z80Byte			SZtable[512];
-extern Z80Byte			Ptable[512];
-extern Z80Byte			Stable[512];
-extern Z80Byte			Ztable[512];
 
 
 /* ---------------------------------------- GLOBAL GENERAL OPCODES/ROUTINES

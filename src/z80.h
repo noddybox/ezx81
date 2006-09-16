@@ -27,6 +27,11 @@
 #ifndef Z80_H
 #define Z80_H "$Id$"
 
+/* Configuration
+*/
+#include "z80_config.h"
+
+
 /* ---------------------------------------- TYPES
 */
 
@@ -157,11 +162,16 @@ typedef struct
 
 /* Initialises the processor.  
 */
+#ifdef ENABLE_ARRAY_MEMORY
+Z80	*Z80Init(Z80ReadPort read_port,
+		 Z80WritePort write_port);
+#else
 Z80	*Z80Init(Z80ReadMemory read_memory,
 		 Z80WriteMemory write_memory,
 		 Z80ReadPort read_port,
 		 Z80WritePort write_port,
 		 Z80ReadMemory read_for_disassem);
+#endif
 
 
 /* Resets the processor.
@@ -235,8 +245,8 @@ void	Z80SetState(Z80 *cpu, const Z80State *state);
 void	Z80SetLabels(Z80Label labels[]);
 
 
-/* Simple disassembly of memory accessed through read_for_disassem.
-   addr is updated on exit.
+/* Simple disassembly of memory accessed through read_for_disassem, or 
+   Z80_MEMORY as appropriate.  addr is updated on exit.
 */
 const char *Z80Disassemble(Z80 *cpu, Z80Word *addr);
 

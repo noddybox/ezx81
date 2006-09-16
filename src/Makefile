@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.10 2006-09-07 23:46:31 ianc Exp $
+# $Id: Makefile,v 1.11 2006-09-16 22:54:59 ianc Exp $
 # 
 
 
@@ -56,7 +56,7 @@ OBJECTS	=	main.o		\
 		z80_decode.o	\
 		z80_dis.o
 
-CFLAGS +=	`sdl-config --cflags` -DENABLE_DISASSEM
+CFLAGS +=	`sdl-config --cflags`
 
 LIBS	=	`sdl-config --libs`
 
@@ -100,13 +100,14 @@ main.o: /usr/local/include/SDL11/SDL_mouse.h
 main.o: /usr/local/include/SDL11/SDL_video.h
 main.o: /usr/local/include/SDL11/SDL_mutex.h
 main.o: /usr/local/include/SDL11/SDL_quit.h
-main.o: /usr/local/include/SDL11/SDL_version.h z80.h zx81.h gfx.h gui.h
-main.o: memmenu.h config.h exit.h
+main.o: /usr/local/include/SDL11/SDL_version.h z80.h z80_config.h zx81.h
+main.o: gfx.h gui.h memmenu.h config.h exit.h
 zx81.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 zx81.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
 zx81.o: /usr/include/machine/_types.h /usr/include/stdio.h
 zx81.o: /usr/include/string.h /usr/include/strings.h zx81.h z80.h
-zx81.o: /usr/local/include/SDL11/SDL.h /usr/local/include/SDL11/SDL_main.h
+zx81.o: z80_config.h /usr/local/include/SDL11/SDL.h
+zx81.o: /usr/local/include/SDL11/SDL_main.h
 zx81.o: /usr/local/include/SDL11/SDL_types.h
 zx81.o: /usr/local/include/SDL11/SDL_getenv.h
 zx81.o: /usr/local/include/SDL11/SDL_error.h
@@ -190,7 +191,7 @@ memmenu.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
 memmenu.o: /usr/include/machine/_types.h /usr/include/stdio.h
 memmenu.o: /usr/include/string.h /usr/include/strings.h /usr/include/ctype.h
 memmenu.o: /usr/include/_ctype.h /usr/include/runetype.h memmenu.h z80.h
-memmenu.o: zx81.h /usr/local/include/SDL11/SDL.h
+memmenu.o: z80_config.h zx81.h /usr/local/include/SDL11/SDL.h
 memmenu.o: /usr/local/include/SDL11/SDL_main.h
 memmenu.o: /usr/local/include/SDL11/SDL_types.h
 memmenu.o: /usr/local/include/SDL11/SDL_getenv.h
@@ -249,13 +250,13 @@ expr.o: /usr/include/_ctype.h /usr/include/runetype.h
 z80.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 z80.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
 z80.o: /usr/include/machine/_types.h /usr/include/string.h
-z80.o: /usr/include/strings.h z80.h z80_private.h
+z80.o: /usr/include/strings.h z80.h z80_config.h z80_private.h
 z80_decode.o: /usr/include/stdlib.h /usr/include/sys/cdefs.h
 z80_decode.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
 z80_decode.o: /usr/include/machine/_types.h /usr/include/limits.h
 z80_decode.o: /usr/include/sys/limits.h /usr/include/machine/_limits.h
-z80_decode.o: /usr/include/sys/syslimits.h z80.h z80_private.h
-z80_dis.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
+z80_decode.o: /usr/include/sys/syslimits.h z80.h z80_config.h z80_private.h
+z80_dis.o: z80_config.h /usr/include/stdio.h /usr/include/sys/cdefs.h
 z80_dis.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
 z80_dis.o: /usr/include/machine/_types.h /usr/include/string.h
 z80_dis.o: /usr/include/strings.h /usr/include/stdarg.h z80.h z80_private.h

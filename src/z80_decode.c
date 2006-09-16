@@ -118,6 +118,7 @@ void Z80_InitialiseInternals(void)
     }
 }
 
+#ifndef ENABLE_ARRAY_MEMORY
 static Z80Word FPEEKW(Z80 *cpu, Z80Word addr)
 {
     return (PEEK(addr) | (Z80Word)PEEK(addr+1)<<8);
@@ -129,6 +130,7 @@ static void FPOKEW(Z80 *cpu, Z80Word addr, Z80Word val)
     cpu->mwrite(cpu,addr,val);
     cpu->mwrite(cpu,addr+1,val>>8);
 }
+#endif
 
 
 /* ---------------------------------------- GENERAL MACROS
@@ -274,35 +276,35 @@ do { \
 
 #define OP_ON_MEM(OP,addr) \
 do { \
-    Z80Byte memop=cpu->mread(cpu,addr); \
+    Z80Byte memop=PEEK(addr); \
     OP(memop); \
-    cpu->mwrite(cpu,addr,memop); \
+    POKE(addr,memop); \
 } while(0)
 
 
 #define OP_ON_MEM_WITH_ARG(OP,addr,arg) \
 do { \
-    Z80Byte memop=cpu->mread(cpu,addr); \
+    Z80Byte memop=PEEK(addr); \
     OP(memop,arg); \
-    cpu->mwrite(cpu,addr,memop); \
+    POKE(addr,memop); \
 } while(0)
 
 
 #define OP_ON_MEM_WITH_COPY(OP,addr,copy) \
 do { \
-    Z80Byte memop=cpu->mread(cpu,addr); \
+    Z80Byte memop=PEEK(addr); \
     OP(memop); \
     copy=memop; \
-    cpu->mwrite(cpu,addr,memop); \
+    POKE(addr,memop); \
 } while(0)
 
 
 #define OP_ON_MEM_WITH_ARG_AND_COPY(OP,addr,arg,copy) \
 do { \
-    Z80Byte memop=cpu->mread(cpu,addr); \
+    Z80Byte memop=PEEK(addr); \
     OP(memop,arg); \
     copy=memop; \
-    cpu->mwrite(cpu,addr,memop); \
+    POKE(addr,memop); \
 } while(0)
 
 
@@ -748,7 +750,7 @@ do { \
     case BASE+6:	/* LD DEST,(HL) */ \
 	TSTATE(7); \
 	OFFSET(off); \
-	DEST2=cpu->mread(cpu,*HL+off); \
+	DEST2=PEEK(*HL+off); \
 	break; \
  \
     case BASE+7:	/* LD DEST,A */ \
@@ -2063,7 +2065,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0x36:	/* LD (HL),n */
 	    TSTATE(10);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,FETCH_BYTE);
+	    POKE(*HL+off,FETCH_BYTE);
 	    break;
 
 	case 0x37:	/* SCF */
@@ -2084,7 +2086,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 
 	case 0x3a:	/* LD A,(nnnn) */
 	    TSTATE(13);
-	    cpu->AF.b[HI]=cpu->mread(cpu,FETCH_WORD);
+	    cpu->AF.b[HI]=PEEK(FETCH_WORD);
 	    break;
 
 	case 0x3b:	/* DEC SP */
@@ -2129,37 +2131,37 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0x70:	/* LD (HL),B */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->BC.b[HI]);
+	    POKE(*HL+off,cpu->BC.b[HI]);
 	    break;
 
 	case 0x71:	/* LD (HL),C */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->BC.b[LO]);
+	    POKE(*HL+off,cpu->BC.b[LO]);
 	    break;
 
 	case 0x72:	/* LD (HL),D */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->DE.b[HI]);
+	    POKE(*HL+off,cpu->DE.b[HI]);
 	    break;
 
 	case 0x73:	/* LD (HL),E */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->DE.b[LO]);
+	    POKE(*HL+off,cpu->DE.b[LO]);
 	    break;
 
 	case 0x74:	/* LD (HL),H */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->HL.b[HI]);
+	    POKE(*HL+off,cpu->HL.b[HI]);
 	    break;
 
 	case 0x75:	/* LD (HL),L */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->HL.b[LO]);
+	    POKE(*HL+off,cpu->HL.b[LO]);
 	    break;
 
 	case 0x76:	/* HALT */
@@ -2175,7 +2177,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0x77:	/* LD (HL),A */
 	    TSTATE(7);
 	    OFFSET(off);
-	    cpu->mwrite(cpu,*HL+off,cpu->AF.b[HI]);
+	    POKE(*HL+off,cpu->AF.b[HI]);
 	    break;
 
 	LD_BLOCK(0x78,cpu->AF.b[HI],cpu->AF.b[HI])
