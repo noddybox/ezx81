@@ -52,9 +52,7 @@ static const int	ROMLEN=0x2000;
 static const int	ROM_SAVE=0x2fc;
 static const int	ROM_LOAD=0x347;
 
-/* No of T-states in each 64us HSYNC (hopefully)
-*/
-static const Z80Val	HSYNC_PERIOD=321;
+static const Z80Val	HSYNC_PERIOD=208;
 
 /* The ZX81 screen
 */

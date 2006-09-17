@@ -111,13 +111,21 @@ const char *Dirname(const char *path)
 
 void Debug(const char *format, ...)
 {
+    static const int USE_STDERR=1;
     static FILE *fp=NULL;
     va_list ap;
 
     if (!fp)
     {
-    	fp=fopen("debug.txt","w");
-	setbuf(fp,NULL);
+	if (USE_STDERR)
+	{
+	    fp=stderr;
+	}
+	else
+	{
+	    fp=fopen("debug.txt","w");
+	    setbuf(fp,NULL);
+	}
     }
 
     if (!fp)
