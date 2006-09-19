@@ -89,8 +89,8 @@ static void Parse(FILE *fp)
 	    char *t1=NULL;
 	    char *t2=NULL;
 
-	    t1=strtok(buff,"\t");
-	    t2=strtok(NULL,"\t");
+	    t1=strtok(buff," \t");
+	    t2=strtok(NULL," \t");
 
 	    if (t2)
 	    {
