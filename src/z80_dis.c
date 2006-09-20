@@ -67,7 +67,7 @@ Z80Byte Z80_Dis_FetchByte(Z80 *cpu, Z80Word *pc)
 #ifdef ENABLE_ARRAY_MEMORY
     return Z80_MEMORY[(*pc)++];
 #else
-    return cpu->disread(cpu,(*pc)++);
+    return cpu->priv->disread(cpu,(*pc)++);
 #endif
 }
 
@@ -1463,7 +1463,7 @@ static void DIS_DJNZ (Z80 *z80, Z80Byte op, Z80Word *pc)
 #ifdef ENABLE_ARRAY_MEMORY
     new=*pc+(Z80Relative)Z80_MEMORY[*pc]+1;
 #else
-    new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
+    new=*pc+(Z80Relative)z80->priv->disread(z80,*pc)+1;
 #endif
     (*pc)++;
     Z80_Dis_Set("djnz",Z80_Dis_Printf("$%.4x",new));
@@ -1482,7 +1482,7 @@ static void DIS_JR (Z80 *z80, Z80Byte op, Z80Word *pc)
 #ifdef ENABLE_ARRAY_MEMORY
     new=*pc+(Z80Relative)Z80_MEMORY[*pc]+1;
 #else
-    new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
+    new=*pc+(Z80Relative)z80->priv->disread(z80,*pc)+1;
 #endif
     (*pc)++;
 
@@ -1507,7 +1507,7 @@ static void DIS_JR_CO (Z80 *z80, Z80Byte op, Z80Word *pc)
 #ifdef ENABLE_ARRAY_MEMORY
     new=*pc+(Z80Relative)Z80_MEMORY[*pc]+1;
 #else
-    new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
+    new=*pc+(Z80Relative)z80->priv->disread(z80,*pc)+1;
 #endif
     (*pc)++;
 

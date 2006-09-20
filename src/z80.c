@@ -55,28 +55,28 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 {
     /* Check interrupts
     */
-    if (cpu->raise)
+    if (PRIV->raise)
     {
-    	if (cpu->nmi)
+    	if (PRIV->nmi)
 	{
-	    if (cpu->halt)
+	    if (PRIV->halt)
 	    {
-		cpu->halt=FALSE;
+		PRIV->halt=FALSE;
 		CALLBACK(eZ80_Halt,0);
 		cpu->PC++;
 	    }
 
 	    TSTATE(2);
 	    cpu->IFF1=0;
-	    cpu->nmi=FALSE;
+	    PRIV->nmi=FALSE;
 	    PUSH(cpu->PC);
 	    cpu->PC=0x66;
 	}
     	else if (cpu->IFF1)
 	{
-	    if (cpu->halt)
+	    if (PRIV->halt)
 	    {
-		cpu->halt=FALSE;
+		PRIV->halt=FALSE;
 		CALLBACK(eZ80_Halt,0);
 		cpu->PC++;
 	    }
@@ -88,7 +88,7 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 		default:
 		case 0:
 		    INC_R;
-		    Z80_Decode(cpu,cpu->devbyte);
+		    Z80_Decode(cpu,PRIV->devbyte);
 		    return;
 		    break;
 
@@ -99,12 +99,12 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 
 		case 2:
 		    PUSH(cpu->PC);
-		    cpu->PC=(Z80Word)cpu->I*256+cpu->devbyte;
+		    cpu->PC=(Z80Word)cpu->I*256+PRIV->devbyte;
 		    break;
 	    }
 	}
 
-	cpu->raise=FALSE;
+	PRIV->raise=FALSE;
     }
 }
 
@@ -138,19 +138,29 @@ Z80     *Z80Init(Z80ReadMemory read_memory,
 
     if (cpu)
     {
+    	cpu->priv=malloc(sizeof *cpu->priv);
+
+	if (cpu->priv)
+	{
 #ifndef ENABLE_ARRAY_MEMORY
-	cpu->mread=read_memory;
-	cpu->mwrite=write_memory;
-	cpu->disread=read_for_disassem;
+	    PRIV->mread=read_memory;
+	    PRIV->mwrite=write_memory;
+	    PRIV->disread=read_for_disassem;
 #endif
-	cpu->pread=read_port;
-	cpu->pwrite=write_port;
+	    PRIV->pread=read_port;
+	    PRIV->pwrite=write_port;
 
-	for(f=0;f<eZ80_NO_CALLBACK;f++)
-	    for(r=0;r<MAX_PER_CALLBACK;r++)
-		cpu->callback[f][r]=NULL;
+	    for(f=0;f<eZ80_NO_CALLBACK;f++)
+		for(r=0;r<MAX_PER_CALLBACK;r++)
+		    PRIV->callback[f][r]=NULL;
 
-	Z80Reset(cpu);
+	    Z80Reset(cpu);
+	}
+	else
+	{
+	    free(cpu);
+	    cpu=NULL;
+	}
     }
 
     return cpu;
@@ -159,7 +169,7 @@ Z80     *Z80Init(Z80ReadMemory read_memory,
 
 void Z80Reset(Z80 *cpu)
 {
-    cpu->cycle=0;
+    PRIV->cycle=0;
     cpu->PC=0;
 
     cpu->AF.w=0xffff;
@@ -180,28 +190,22 @@ void Z80Reset(Z80 *cpu)
     cpu->IM=0;
     cpu->I=0;
     cpu->R=0;
-    cpu->halt=0;
+    PRIV->halt=0;
 
-    cpu->raise=FALSE;
-    cpu->nmi=FALSE;
+    PRIV->raise=FALSE;
+    PRIV->nmi=FALSE;
 }
 
 
-void Z80SetPC(Z80 *cpu,Z80Word PC)
+Z80Val Z80Cycles(Z80 *cpu)
 {
-    cpu->PC=PC;
-}
-
-
-Z80Word Z80GetPC(Z80 *cpu)
-{
-    return cpu->PC;
+    return PRIV->cycle;
 }
 
 
 void Z80ResetCycles(Z80 *cpu, Z80Val cycles)
 {
-    cpu->cycle=cycles;
+    PRIV->cycle=cycles;
 }
 
 
@@ -211,9 +215,9 @@ int Z80LodgeCallback(Z80 *cpu, Z80CallbackReason reason, Z80Callback callback)
 
     for(f=0;f<MAX_PER_CALLBACK;f++)
     {
-    	if (!cpu->callback[reason][f])
+    	if (!PRIV->callback[reason][f])
 	{
-	    cpu->callback[reason][f]=callback;
+	    PRIV->callback[reason][f]=callback;
 	    return TRUE;
 	}
     }
@@ -227,23 +231,27 @@ void Z80RemoveCallback(Z80 *cpu, Z80CallbackReason reason, Z80Callback callback)
     int f;
 
     for(f=0;f<MAX_PER_CALLBACK;f++)
-    	if (cpu->callback[reason][f]==callback)
-	    cpu->callback[reason][f]=NULL;
+    {
+    	if (PRIV->callback[reason][f]==callback)
+	{
+	    PRIV->callback[reason][f]=NULL;
+	}
+    }
 }
 
 
 void Z80Interrupt(Z80 *cpu, Z80Byte devbyte)
 {
-    cpu->raise=TRUE;
-    cpu->devbyte=devbyte;
-    cpu->nmi=FALSE;
+    PRIV->raise=TRUE;
+    PRIV->devbyte=devbyte;
+    PRIV->nmi=FALSE;
 }
 
 
 void Z80NMI(Z80 *cpu)
 {
-    cpu->raise=TRUE;
-    cpu->nmi=TRUE;
+    PRIV->raise=TRUE;
+    PRIV->nmi=TRUE;
 }
 
 
@@ -251,12 +259,12 @@ int Z80SingleStep(Z80 *cpu)
 {
     Z80Byte opcode;
 
-    cpu->last_cb=TRUE;
-    cpu->shift=0;
+    PRIV->last_cb=TRUE;
+    PRIV->shift=0;
 
     Z80_CheckInterrupt(cpu);
 
-    CALLBACK(eZ80_Instruction,cpu->cycle);
+    CALLBACK(eZ80_Instruction,PRIV->cycle);
 
     INC_R;
 
@@ -264,75 +272,13 @@ int Z80SingleStep(Z80 *cpu)
 
     Z80_Decode(cpu,opcode);
 
-    return cpu->last_cb;
+    return PRIV->last_cb;
 }
 
 
 void Z80Exec(Z80 *cpu)
 {
     while (Z80SingleStep(cpu));
-}
-
-
-void Z80GetState(Z80 *cpu, Z80State *state)
-{
-    state->cycle=	cpu->cycle;
-
-    state->AF	=	cpu->AF.w;
-    state->BC	=	cpu->BC.w;
-    state->DE	=	cpu->DE.w;
-    state->HL	=	cpu->HL.w;
-
-    state->AF_	=	cpu->AF_;
-    state->BC_	=	cpu->BC_;
-    state->DE_	=	cpu->DE_;
-    state->HL_	=	cpu->HL_;
-
-    state->IX	=	cpu->IX.w;
-    state->IY	=	cpu->IY.w;
-
-    state->SP	=	cpu->SP;
-    state->PC	=	cpu->PC;
-
-    state->IFF1	=	cpu->IFF1;
-    state->IFF2	=	cpu->IFF2;
-    state->IM	=	cpu->IM;
-    state->I	=	cpu->I;
-    state->R	=	cpu->R;
-}
-
-
-void Z80SetState(Z80 *cpu, const Z80State *state)
-{
-    cpu->cycle	=	state->cycle;
-
-    cpu->AF.w	=	state->AF;
-    cpu->BC.w	=	state->BC;
-    cpu->DE.w	=	state->DE;
-    cpu->HL.w	=	state->HL;
-
-    cpu->AF_	=	state->AF_;
-    cpu->BC_	=	state->BC_;
-    cpu->DE_	=	state->DE_;
-    cpu->HL_	=	state->HL_;
-
-    cpu->IX.w	=	state->IX;
-    cpu->IY.w	=	state->IY;
-
-    cpu->SP	=	state->SP;
-    cpu->PC	=	state->PC;
-
-    cpu->IFF1	=	state->IFF1;
-    cpu->IFF2	=	state->IFF2;
-    cpu->IM	=	state->IM;
-    cpu->I	=	state->I;
-    cpu->R	=	state->R;
-}
-
-
-Z80Val Z80Cycles(Z80 *cpu)
-{
-    return cpu->cycle;
 }
 
 
@@ -364,7 +310,7 @@ const char *Z80Disassemble(Z80 *cpu, Z80Word *pc)
 #ifdef ENABLE_ARRAY_MEMORY
 	strcat(s,Z80_Dis_Printf(" %.2x",(int)Z80_MEMORY[opc++]));
 #else
-	strcat(s,Z80_Dis_Printf(" %.2x",(int)cpu->disread(cpu,opc++)));
+	strcat(s,Z80_Dis_Printf(" %.2x",(int)PRIV->disread(cpu,opc++)));
 #endif
     }
 

@@ -52,7 +52,7 @@ static const int	ROMLEN=0x2000;
 static const int	ROM_SAVE=0x2fc;
 static const int	ROM_LOAD=0x347;
 
-static const Z80Val	HSYNC_PERIOD=208;
+static const Z80Val	NMI_PERIOD=208;
 
 /* The ZX81 screen
 */
@@ -239,9 +239,9 @@ static const char *ConvertFilename(Z80Word addr)
 }
 
 
-static void LoadTape(Z80State *state)
+static void LoadTape(Z80 *cpu)
 {
-    const char *p=ConvertFilename(state->DE);
+    const char *p=ConvertFilename(cpu->DE.w);
     char path[FILENAME_MAX];
     FILE *fp;
     Z80Word addr;
@@ -278,9 +278,9 @@ static void LoadTape(Z80State *state)
 }
 
 
-static void SaveTape(Z80State *state)
+static void SaveTape(Z80 *cpu)
 {
-    const char *p=ConvertFilename(state->DE);
+    const char *p=ConvertFilename(cpu->DE.w);
     char path[FILENAME_MAX];
     FILE *fp;
     Z80Word start;
@@ -315,18 +315,14 @@ static void SaveTape(Z80State *state)
 
 static int EDCallback(Z80 *z80, Z80Val data)
 {
-    Z80State state;
-
-    Z80GetState(z80,&state);
-
     switch((Z80Byte)data)
     {
     	case 0xf0:
-	    SaveTape(&state);
+	    SaveTape(z80);
 	    break;
 
     	case 0xf1:
-	    LoadTape(&state);
+	    LoadTape(z80);
 	    break;
 
 	default:
@@ -339,7 +335,6 @@ static int EDCallback(Z80 *z80, Z80Val data)
 
 static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 {
-    Z80State state;
     Z80Word base;
     int x,y;
     int inv;
@@ -347,8 +342,6 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 
     if (!scr_enable)
     	return;
-
-    Z80GetState(z80,&state);
 
     /* Extra check due to out dodgy ULA emulation
     */
@@ -366,7 +359,7 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 	inv=val&0x80;
 	val&=0x3f;
 
-	base=((Z80Word)state.I<<8)|(val<<3)|ULA.c;
+	base=((Z80Word)z80->I<<8)|(val<<3)|ULA.c;
 
 	if (inv)
 	{
@@ -394,28 +387,26 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
-    if (val>HSYNC_PERIOD)
-    {
-	Z80ResetCycles(z80,val-HSYNC_PERIOD);
+    static Z80Byte last_R;
 
-	if (nmigen && hsync)
+    if (nmigen && val>NMI_PERIOD)
+    {
+	Z80ResetCycles(z80,val-NMI_PERIOD);
+
+	Z80NMI(z80);
+	/* Debug("NMI\n"); */
+    }
+
+    if (hsync)
+    {
+    	if (last_R&0x40 && !(z80->R&0x40))
 	{
-	    Z80NMI(z80);
-	    Debug("NMIGEN\n");
-	}
-	else if (hsync)
-	{
-	    Debug("HSYNC\n");
 	    Z80Interrupt(z80,0xff);
-	    if (ULA.release)
-	    {
-	    	/* ULA.release=FALSE; */
-		ULA.c=(ULA.c+1)&7;
-		ULA.y++;
-		ULA.x=0;
-	    }
+	    /* Debug("INTERRUPT\n"); */
 	}
     }
+
+    last_R=z80->R;
 
     return TRUE;
 }
@@ -570,7 +561,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 {
     Z80Byte b=0;
 
-    Debug("IN  %4.4x\n",port);
+    /* Debug("IN  %4.4x\n",port); */
 
     switch(port&0xff)
     {
@@ -609,13 +600,13 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 	    */
 	    if (!vsync)
 	    {
-		Debug("VSYNC\n");
+		/* Debug("VSYNC\n"); */
 
 		GFXEndFrame(TRUE);
 		GFXClear(white);
 
 		ULA.x=0;
-		ULA.y=-1;
+		ULA.y=0;
 		ULA.c=7;
 		ULA.release=FALSE;
 
@@ -634,7 +625,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 	    */
 	    if (!nmigen)
 	    {
-		Debug("HSYNC OFF\n");
+		/* Debug("HSYNC OFF\n"); */
 	    	hsync=FALSE;
 	    }
 	    break;
@@ -649,7 +640,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 
 void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
-    Debug("OUT %4.4x,%2.2X\n",port,val);
+    /* Debug("OUT %4.4x,%2.2X\n",port,val); */
 
     /* Any port write releases the ULA line counter
     */
@@ -658,20 +649,20 @@ void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
     switch(port&0xff)
     {
     	case 0xfd:	/* NMI generator OFF */
-	    Debug("NMIGEN OFF\n");
+	    /* Debug("NMIGEN OFF\n"); */
 	    nmigen=FALSE;
 	    break;
 
 	case 0xfe:	/* NMI generator ON */
-	    Debug("NMIGEN ON/VSYNC OFF\n");
+	    /* Debug("NMIGEN ON/VSYNC OFF\n"); */
 	    nmigen=TRUE;
 	    vsync=FALSE;
+	    Z80ResetCycles(z80,0);
 	    break;
 
 	case 0xff:	/* HSYNC generator ON */
-	    Debug("HSYNC ON\n");
+	    /* Debug("HSYNC ON\n"); */
 	    hsync=TRUE;
-	    Z80ResetCycles(z80,0);
 	    break;
     }
 }

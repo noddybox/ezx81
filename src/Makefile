@@ -18,7 +18,7 @@
 # 
 # -------------------------------------------------------------------------
 # 
-# $Id: Makefile,v 1.11 2006-09-16 22:54:59 ianc Exp $
+# $Id: Makefile,v 1.12 2006-09-20 00:02:42 ianc Exp $
 # 
 
 
@@ -212,7 +212,7 @@ memmenu.o: /usr/local/include/SDL11/SDL_mouse.h
 memmenu.o: /usr/local/include/SDL11/SDL_video.h
 memmenu.o: /usr/local/include/SDL11/SDL_mutex.h
 memmenu.o: /usr/local/include/SDL11/SDL_quit.h
-memmenu.o: /usr/local/include/SDL11/SDL_version.h gfx.h gui.h util.h
+memmenu.o: /usr/local/include/SDL11/SDL_version.h gfx.h gui.h expr.h util.h
 util.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
 util.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
 util.o: /usr/include/machine/_types.h /usr/include/string.h

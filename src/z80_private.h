@@ -45,40 +45,10 @@
 /* ---------------------------------------- TYPES
 */
 
-typedef signed short	sword;
-
-typedef union
-{
-    Z80Word		w;
-    Z80Byte		b[2];
-} Z80Reg;
-
-struct Z80
+struct Z80Private
 {
     Z80Val		cycle;
 
-    Z80Word		PC;
-
-    Z80Reg		AF;
-    Z80Reg		BC;
-    Z80Reg		DE;
-    Z80Reg		HL;
-
-    Z80Word		AF_;
-    Z80Word		BC_;
-    Z80Word		DE_;
-    Z80Word		HL_;
-
-    Z80Reg		IX;
-    Z80Reg		IY;
-
-    Z80Word		SP;
-
-    Z80Byte		IFF1;
-    Z80Byte		IFF2;
-    Z80Byte		IM;
-    Z80Byte		I;
-    Z80Byte		R;
     int			halt;
 
     Z80Byte		shift;
@@ -101,6 +71,8 @@ struct Z80
 
     int			last_cb;
 };
+
+#define PRIV		cpu->priv
 
 
 /* ---------------------------------------- ARRAY MEMORY
@@ -126,9 +98,9 @@ extern Z80Byte	Z80_MEMORY[];
 			int f;					\
 								\
 			for(f=0;f<MAX_PER_CALLBACK;f++)		\
-			    if (cpu->callback[r][f])		\
-				cpu->last_cb &=			\
-				    cpu->callback[r][f](cpu,d);	\
+			    if (PRIV->callback[r][f])		\
+				PRIV->last_cb &=		\
+				    PRIV->callback[r][f](cpu,d);\
 			} while(0)
 
 /* Flag register
@@ -183,13 +155,13 @@ static inline Z80Word PEEKW(Z80Word addr)
 
 #else
 
-#define PEEK(addr)		(cpu->mread(cpu,addr))
+#define PEEK(addr)		(PRIV->mread(cpu,addr))
 #define PEEKW(addr)		FPEEKW(cpu,addr)
 
-#define POKE(addr,val)		cpu->mwrite(cpu,addr,val)
+#define POKE(addr,val)		PRIV->mwrite(cpu,addr,val)
 #define POKEW(addr,val)		FPOKEW(cpu,addr,val)
 
-#define FETCH_BYTE		(cpu->mread(cpu,cpu->PC++))
+#define FETCH_BYTE		(PRIV->mread(cpu,cpu->PC++))
 #define FETCH_WORD		(cpu->PC+=2,FPEEKW(cpu,cpu->PC-2))
 
 #endif
@@ -204,10 +176,10 @@ static inline Z80Word PEEKW(Z80Word addr)
 
 #define CARRY			IS_C
 
-#define IS_IX_IY		(cpu->shift==0xdd || cpu->shift==0xfd)
+#define IS_IX_IY		(PRIV->shift==0xdd || PRIV->shift==0xfd)
 #define OFFSET(off)		off=(IS_IX_IY ? (Z80Relative)FETCH_BYTE:0)
 
-#define TSTATE(n)		cpu->cycle+=n
+#define TSTATE(n)		PRIV->cycle+=n
 
 #define ADD_R(v)		cpu->R=((cpu->R&0x80)|((cpu->R+(v))&0x7f))
 #define INC_R			ADD_R(1)
@@ -228,8 +200,8 @@ static inline Z80Word PEEKW(Z80Word addr)
 				{					\
 				    Z80Word pushv=REG;			\
 				    cpu->SP-=2;				\
-				    cpu->mwrite(cpu,cpu->SP,pushv);	\
-				    cpu->mwrite(cpu,cpu->SP+1,pushv>>8);\
+				    PRIV->mwrite(cpu,cpu->SP,pushv);	\
+				    PRIV->mwrite(cpu,cpu->SP+1,pushv>>8);\
 				} while(0)
 #endif
 
@@ -257,11 +229,11 @@ static inline Z80Word PEEKW(Z80Word addr)
 
 #define OUT(P,V)		do				\
 				{				\
-				    if (cpu->pwrite)		\
-				    	cpu->pwrite(cpu,P,V);	\
+				    if (PRIV->pwrite)		\
+				    	PRIV->pwrite(cpu,P,V);	\
 				} while(0)
 
-#define IN(P)			(cpu->pread?cpu->pread(cpu,P):0)
+#define IN(P)			(PRIV->pread?PRIV->pread(cpu,P):0)
 
 
 
