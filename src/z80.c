@@ -83,6 +83,9 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 
 	    TSTATE(2);
 
+	    cpu->IFF1=0;
+	    cpu->IFF2=0;
+
 	    switch(cpu->IM)
 	    {
 		default:

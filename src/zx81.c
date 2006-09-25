@@ -174,14 +174,14 @@ static void RomPatch(void)
     static const Z80Byte save[]=
     {
     	0xed, 0xf0,		/* ED F0 illegal op	*/
-	0xc3, 0x08, 0x02,	/* JP $0207		*/
+	0xc3, 0x07, 0x02,	/* JP $0207		*/
 	0xff			/* End of patch		*/
     };
 
     static const Z80Byte load[]=
     {
     	0xed, 0xf1,		/* ED F0 illegal op	*/
-	0xc3, 0x08, 0x02,	/* JP $0207		*/
+	0xc3, 0x07, 0x02,	/* JP $0207		*/
 	0xff			/* End of patch		*/
     };
 
@@ -343,9 +343,9 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
     if (!scr_enable)
     	return;
 
-    /* Extra check due to out dodgy ULA emulation
+    /* Extra check due possibly dodgy ULA emulation
     */
-    if (ULA.y>=0 && ULA.y<SCR_H)
+    if (ULA.y>=0 && ULA.y<SCR_H && ULA.x<TXT_W)
     {
 	Uint32 fg,bg;
 
@@ -381,7 +381,7 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 	}
     }
 
-    ULA.x=(ULA.x+1)&0x1f;
+    ULA.x++;
 }
 
 
@@ -397,11 +397,14 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	/* Debug("NMI\n"); */
     }
 
-    if (hsync)
+    if (hsync && !nmigen)
     {
     	if (last_R&0x40 && !(z80->R&0x40))
 	{
 	    Z80Interrupt(z80,0xff);
+	    ULA.y++;
+	    ULA.c=(ULA.c+1)%8;
+	    ULA.x=0;
 	    /* Debug("INTERRUPT\n"); */
 	}
     }
@@ -464,7 +467,7 @@ void ZX81Init(Z80 *z80)
     /* Memory size (1 or 16K)
     */
     if (IConfig(CONF_MEMSIZE)==16)
-	RAMLEN=0x2000;
+	RAMLEN=0x4000;
     else
 	RAMLEN=0x400;
 
@@ -606,7 +609,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 		GFXClear(white);
 
 		ULA.x=0;
-		ULA.y=0;
+		ULA.y=-1;
 		ULA.c=7;
 		ULA.release=FALSE;
 
@@ -621,7 +624,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 		ULA.release=FALSE;
 	    }
 
-	    /* If NMI on, turn off the HSYNC generator
+	    /* If NMI off, turn off the HSYNC generator
 	    */
 	    if (!nmigen)
 	    {
