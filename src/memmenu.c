@@ -1121,8 +1121,6 @@ int MemoryMenu(Z80 *z80)
     int quit=FALSE;
     int y;
 
-    GFXKeyRepeat(TRUE);
-
     while(!done)
     {
 	DisplayMenu();
@@ -1203,8 +1201,6 @@ int MemoryMenu(Z80 *z80)
 	    	break;
 	}
     }
-
-    GFXKeyRepeat(FALSE);
 
     GFXClear(BLACK);
     return quit;

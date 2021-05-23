@@ -100,7 +100,7 @@ static Z80Byte		matrix[8];
 
 typedef struct
 {
-    SDLKey	key;
+    SDL_Keycode	key;
     int		m1,b1,m2,b2;
 } MatrixMap;
 
@@ -492,6 +492,11 @@ void ZX81Init(Z80 *z80)
 void ZX81KeyEvent(SDL_Event *e)
 {
     const MatrixMap *m;
+
+    if (e->key.repeat)
+    {
+        return;
+    }
 
     m=keymap;
 

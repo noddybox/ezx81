@@ -342,8 +342,6 @@ const char *GUIInputString(const char *prompt, const char *orig)
     strncat(buff,orig,40);
     len=strlen(buff);
 
-    SDL_EnableUNICODE(1);
-
     while(!done)
     {
     	GFXRect(0,y_pos,GFX_WIDTH,8,BLACK,TRUE);
@@ -372,7 +370,7 @@ const char *GUIInputString(const char *prompt, const char *orig)
 		break;
 
 	    default:
-		c=(unsigned char)e->key.keysym.unicode;
+		c=(unsigned char)e->key.keysym.sym;
 
 	    	if (len<40 && isprint(c))
 		{
@@ -382,8 +380,6 @@ const char *GUIInputString(const char *prompt, const char *orig)
 		break;
 	}
     }
-
-    SDL_EnableUNICODE(0);
 
     return buff;
 }
