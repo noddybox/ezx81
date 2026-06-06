@@ -1,0 +1,23 @@
+# This file is read from $HOME/.ezx81
+
+# Path to the ZX81 ROM.  Defaults to ./zx81.rom
+rompath         /path/to/zx81.rom
+
+# Path where .P files are located for loading.  Defaults to the current
+# directory
+tapedir         /path/to/.P_files
+
+# 1 for fullscreen, 0 for windowed.  Defaults to windowed
+fullscreen      0
+
+# The amount in KB of RAM.  Only 1 and 16 makes sense.
+memsize         16
+
+# The number of frames per second.  50 is the default.
+frames          50
+
+# An integer scale ratio.  Defaults to 1.
+scale           1
+
+# Trace the state of the Z80 to stdout if 1.  Defaults to 0.
+trace           0
