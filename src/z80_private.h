@@ -20,14 +20,12 @@
 
     -------------------------------------------------------------------------
 
-    $Id$
-
     Private macros for Z80
 
 */
 
 #ifndef Z80_PRIVATE_H
-#define Z80_PRIVATE_H "$Id$"
+#define Z80_PRIVATE_H
 
 #include "z80_config.h"
 

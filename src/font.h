@@ -25,7 +25,7 @@
 */
 
 #ifndef EZX81_FONT_H
-#define EZX81_FONT_H "$Id$"
+#define EZX81_FONT_H
 
 typedef unsigned char	FontChar[64];
 

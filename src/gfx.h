@@ -25,7 +25,7 @@
 */
 
 #ifndef EZX81_GFX_H
-#define EZX81_GFX_H "$Id$"
+#define EZX81_GFX_H
 
 #include "SDL.h"
 

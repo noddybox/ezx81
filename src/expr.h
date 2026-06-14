@@ -28,7 +28,7 @@
 */
 
 #ifndef EXPR_H
-#define EXPR_H "$Id$"
+#define EXPR_H
 
 /* ---------------------------------------- INTERFACES
 */

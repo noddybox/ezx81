@@ -24,8 +24,8 @@
 
 */
 
-#ifndef ESPEC_UTIL_H
-#define ESPEC_UTIL_H "$Id$"
+#ifndef EZX81_UTIL_H
+#define EZX81_UTIL_H
 
 #include <stdlib.h>
 

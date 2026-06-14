@@ -23,16 +23,12 @@
     Usual library wrappers and utils
 
 */
-static const char ident[]="$Id$";
-
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 
 #include "util.h"
 #include "exit.h"
-
-static const char ident_h[]=ESPEC_UTIL_H;
 
 
 /* ---------------------------------------- MACROS

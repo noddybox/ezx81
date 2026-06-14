@@ -125,7 +125,6 @@ int main(int argc, char *argv[])
 				   "F1  - Help                        \n"
 				   "F2  - About                       \n"
 				   "F3  - View ZX81 keyboad           \n"
-				   "F10 - Close all open tape files   \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		break;

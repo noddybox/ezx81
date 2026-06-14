@@ -25,7 +25,7 @@
 */
 
 #ifndef EZX81_CONFIG_H
-#define EZX81_CONFIG_H "$Id$"
+#define EZX81_CONFIG_H
 
 
 /* Integer settings

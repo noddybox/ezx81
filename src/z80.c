@@ -31,10 +31,6 @@
 #include "z80.h"
 #include "z80_private.h"
 
-static const char ident[]="$Id$";
-static const char ident_z80_header[]=Z80_H;
-static const char ident_z80_private_header[]=Z80_PRIVATE_H;
-
 Z80Label        *z80_labels=NULL;
 
 /* ---------------------------------------- PRIVATE FUNCTIONS

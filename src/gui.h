@@ -25,7 +25,7 @@
 */
 
 #ifndef EZX81_GUI_H
-#define EZX81_GUI_H "$Id$"
+#define EZX81_GUI_H
 
 #include "SDL.h"
 

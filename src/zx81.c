@@ -23,8 +23,6 @@
     Provides the emulation for the ZX81
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,7 +33,6 @@ static const char ident[]="$Id$";
 #include "util.h"
 #include "exit.h"
 
-static const char ident_h[]=EZX81_ZX81H;
 
 #ifndef TRUE
 #define TRUE 1

@@ -25,7 +25,7 @@
 */
 
 #ifndef EZX81_EXIT_H
-#define EZX81_EXIT_H "$Id$"
+#define EZX81_EXIT_H
 
 
 /* Exit

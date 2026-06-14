@@ -20,12 +20,12 @@
 
     -------------------------------------------------------------------------
 
-    $Id$
+    Z80 Config
 
 */
 
 #ifndef Z80_CONFIG_H
-#define Z80_CONFIG_H "$Id$"
+#define Z80_CONFIG_H
 
 
 /* This file defines various compile-time configuration options

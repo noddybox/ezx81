@@ -23,15 +23,11 @@
     Config file
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "exit.h"
 #include "config.h"
-
-static const char ident_h[]=EZX81_CONFIG_H;
 
 #ifndef TRUE
 #define TRUE 1

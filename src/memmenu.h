@@ -25,7 +25,7 @@
 */
 
 #ifndef EZX81_MEMMENU_H
-#define EZX81_MEMMENU_H "$Id$"
+#define EZX81_MEMMENU_H
 
 #include "z80.h"
 

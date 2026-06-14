@@ -23,8 +23,6 @@
     Provides the memory menu
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,8 +36,6 @@ static const char ident[]="$Id$";
 #include "util.h"
 
 #include <SDL.h>
-
-static const char ident_h[]=EZX81_MEMMENU_H;
 
 #ifndef TRUE
 #define TRUE		1
