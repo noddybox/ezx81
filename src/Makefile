@@ -38,6 +38,7 @@ SOURCE	=	main.c		\
 		memmenu.c	\
 		util.c		\
 		exit.c		\
+		font.c		\
 		expr.c		\
 		z80.c		\
 		z80_decode.c	\
@@ -51,6 +52,7 @@ OBJECTS	=	main.o		\
 		memmenu.o	\
 		util.o		\
 		exit.o		\
+		font.o		\
 		expr.o		\
 		z80.o		\
 		z80_decode.o	\
@@ -64,5 +66,10 @@ LIBS	=	`sdl2-config --libs`
 $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
+depend:
+	makedepend $(SOURCE)
+
 clean:
-	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core
+	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
