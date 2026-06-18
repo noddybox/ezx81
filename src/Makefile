@@ -73,3 +73,16 @@ clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+main.o: z80.h z80_config.h zx81.h gfx.h gui.h memmenu.h config.h exit.h
+zx81.o: zx81.h z80.h z80_config.h gfx.h gui.h config.h util.h exit.h
+config.o: exit.h config.h
+gfx.o: gfx.h exit.h config.h util.h font.h
+gui.o: gui.h gfx.h util.h exit.h
+memmenu.o: memmenu.h z80.h z80_config.h zx81.h gfx.h gui.h expr.h util.h
+util.o: util.h exit.h
+exit.o: exit.h
+font.o: font.h
+z80.o: z80.h z80_config.h z80_private.h
+z80_decode.o: z80.h z80_config.h z80_private.h
+z80_dis.o: z80_config.h z80.h z80_private.h
