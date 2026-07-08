@@ -324,4 +324,9 @@ const char *Z80Disassemble(Z80 *cpu, Z80Word *pc)
 #endif
 }
 
+Z80Word Z80GetPC(Z80 *cpu)
+{
+    return cpu->PC;
+}
+
 /* END OF FILE */

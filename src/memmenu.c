@@ -608,7 +608,7 @@ static int Instruction(Z80 *z80, Z80Val data)
 
 	    if (ExprEval(bpoint.expr[f],&l,Expand,z80))
 	    {
-		if (l)
+		if (l == Z80GetPC(z80))
 		    brkpoint=bpoint.expr[f];
 	    }
 	}

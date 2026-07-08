@@ -245,6 +245,10 @@ void	Z80SetLabels(Z80Label labels[]);
 */
 const char *Z80Disassemble(Z80 *cpu, Z80Word *addr);
 
+/* Gets the PC                                                                  
+*/                                                                              
+Z80Word	Z80GetPC(Z80 *cpu);                                                     
+
 #endif
 
 /* END OF FILE */
