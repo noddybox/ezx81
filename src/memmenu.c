@@ -90,7 +90,7 @@ typedef struct
 */
 static FILE		*trace=NULL;
 static Breakpoint	bpoint={0,NULL,NULL};
-static const char	*brkpoint=NULL;
+static const char	*raised=NULL;
 static int		lodged=FALSE;
 
 
@@ -606,10 +606,21 @@ static int Instruction(Z80 *z80, Z80Val data)
 	{
 	    long l;
 
-	    if (ExprEval(bpoint.expr[f],&l,Expand,z80))
+	    if (strstr(bpoint.expr[f], "=="))
 	    {
-		if (l == Z80GetPC(z80))
-		    brkpoint=bpoint.expr[f];
+		if (ExprEval(bpoint.expr[f],&l,Expand,z80))
+		{
+		    if (l)
+			raised=bpoint.expr[f];
+		}
+	    }
+	    else
+	    {
+		if (ExprEval(bpoint.expr[f],&l,Expand,z80))
+		{
+		    if (l == z80->PC)
+			raised=bpoint.expr[f];
+		}
 	    }
 	}
 
@@ -1216,8 +1227,8 @@ const char *Break(void)
 {
     const char *ret;
 
-    ret=brkpoint;
-    brkpoint=NULL;
+    ret=raised;
+    raised=NULL;
 
     return ret;
 }

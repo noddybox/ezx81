@@ -47,8 +47,10 @@ static void InitTables()
     Z80_InitialiseInternals();
 }
 
-static void Z80_CheckInterrupt(Z80 *cpu)
+static int Z80_CheckInterrupt(Z80 *cpu)
 {
+    int raise = PRIV->raise;
+
     /* Check interrupts
     */
     if (PRIV->raise)
@@ -88,7 +90,7 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 		case 0:
 		    INC_R;
 		    Z80_Decode(cpu,PRIV->devbyte);
-		    return;
+		    return TRUE;
 		    break;
 
 		case 1:
@@ -105,6 +107,8 @@ static void Z80_CheckInterrupt(Z80 *cpu)
 
 	PRIV->raise=FALSE;
     }
+
+    return raise;
 }
 
 
@@ -256,20 +260,19 @@ void Z80NMI(Z80 *cpu)
 
 int Z80SingleStep(Z80 *cpu)
 {
-    Z80Byte opcode;
-
     PRIV->last_cb=TRUE;
     PRIV->shift=0;
 
-    Z80_CheckInterrupt(cpu);
+    if (!Z80_CheckInterrupt(cpu))
+    {
+	Z80Byte opcode;
+
+	INC_R;
+	opcode=FETCH_BYTE;
+	Z80_Decode(cpu,opcode);
+    }
 
     CALLBACK(eZ80_Instruction,PRIV->cycle);
-
-    INC_R;
-
-    opcode=FETCH_BYTE;
-
-    Z80_Decode(cpu,opcode);
 
     return PRIV->last_cb;
 }
