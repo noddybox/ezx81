@@ -33,7 +33,8 @@ is running.
 
 The emulator only supports the use of .P files, which are simple binary dumps
 of memory.  It loads FILE.P from the snapshot directory defined in the config
-file if you issue the command `LOAD "FILE"`.  Saving is not implemented yet.
+file if you issue the command `LOAD "FILE"`.  Saving will save to a file
+FILE.P if you oissue the command `SAVE "FILE"`.
 
 ## Memory Menu
 
