@@ -40,6 +40,8 @@ static const char id[]="$Id$";
 
 /* ---------------------------------------- MACROS
 */
+#define EZX81_VERSION	"V1.0-dev"
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -133,7 +135,8 @@ int main(int argc, char *argv[])
 		    if (e->key.state==SDL_PRESSED)
 			GUIMessage(eMessageBox,
 				   "eZX81 - ZX81 Emulator",
-				   "(c) 2004-2026 Ian Cowburn\n"
+				   "(c) 2004-2026 Ian Cowburn "
+				   EZX81_VERSION "\n"
 				   " \n"
 				   "This software comes with ABSOLUTELY \n"
 				   "NO WARRANTY, and you are free to    \n"
