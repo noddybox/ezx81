@@ -94,17 +94,17 @@ const char *Z80_Dis_GetArg(void)
 }
 
 
-static const char *GetLabel(Z80Word w)
+static const char *GetLabel(Z80 *z80, Z80Word w)
 {
-    if (z80_labels)
+    if (z80->labels)
     {
     	int f;
 
-	for(f=0;z80_labels[f].label;f++)
+	for(f=0;z80->labels[f].label;f++)
 	{
-	    if (z80_labels[f].address==w)
+	    if (z80->labels[f].address==w)
 	    {
-	    	return z80_labels[f].label;
+	    	return z80->labels[f].label;
 	    }
 	}
     }
@@ -306,7 +306,7 @@ static void DIS_LD_ADDR_IX(Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("(%s),ix",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("($%.4x),ix",w));
@@ -344,7 +344,7 @@ static void DIS_LD_IX_ADDR(Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("ix,(%s)",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("ix,($%.4x)",w));
@@ -733,7 +733,7 @@ static void DIS_ED_LD_ADDR_R16(Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("(%s),%s",p,z80_dis_reg16[(op-0x40)/16]));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("($%.4x),%s",w,z80_dis_reg16[(op-0x40)/16]));
@@ -771,7 +771,7 @@ static void DIS_ED_LD_R16_ADDR(Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("%s,(%s)",z80_dis_reg16[(op-0x40)/16],p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("%s,($%.4x)",z80_dis_reg16[(op-0x40)/16],w));
@@ -994,7 +994,7 @@ static void DIS_LD_ADDR_IY(Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("(%s),iy",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("($%.4x),iy",w));
@@ -1032,7 +1032,7 @@ static void DIS_LD_IY_ADDR(Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("iy,(%s)",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("iy,($%.4x)",w));
@@ -1470,7 +1470,7 @@ static void DIS_JR (Z80 *z80, Z80Byte op, Z80Word *pc)
     new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
     (*pc)++;
 
-    if ((p=GetLabel(new)))
+    if ((p=GetLabel(z80, new)))
 	Z80_Dis_Set("jr",Z80_Dis_Printf("%s",p));
     else
 	Z80_Dis_Set("jr",Z80_Dis_Printf("$%.4x",new));
@@ -1491,7 +1491,7 @@ static void DIS_JR_CO (Z80 *z80, Z80Byte op, Z80Word *pc)
     new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
     (*pc)++;
 
-    if ((p=GetLabel(new)))
+    if ((p=GetLabel(z80, new)))
 	Z80_Dis_Set("jr",Z80_Dis_Printf("%s,%s",con,p));
     else
 	Z80_Dis_Set("jr",Z80_Dis_Printf("%s,$%.4x",con,new));
@@ -1504,7 +1504,7 @@ static void DIS_LD_ADDR_HL (Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("(%s),hl",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("($%.4x),hl",w));
@@ -1522,7 +1522,7 @@ static void DIS_LD_HL_ADDR (Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("hl,(%s)",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("hl,($%.4x)",w));
@@ -1540,7 +1540,7 @@ static void DIS_LD_ADDR_A (Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("(%s),a",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("($%.4x),a",w));
@@ -1558,7 +1558,7 @@ static void DIS_LD_A_ADDR (Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("ld",Z80_Dis_Printf("a,(%s)",p));
     else
 	Z80_Dis_Set("ld",Z80_Dis_Printf("a,($%.4x)",w));
@@ -1675,7 +1675,7 @@ static void DIS_JP (Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("jp",Z80_Dis_Printf("%s",p));
     else
 	Z80_Dis_Set("jp",Z80_Dis_Printf("$%.4x",w));
@@ -1720,7 +1720,7 @@ static void DIS_JP_CO (Z80 *z80, Z80Byte op, Z80Word *pc)
     w=Z80_Dis_FetchWord(z80,pc);
     con=z80_dis_condition[(op-0xc0)/8];
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("jp",Z80_Dis_Printf("%s,%s",con,p));
     else
 	Z80_Dis_Set("jp",Z80_Dis_Printf("%s,$%.4x",con,w));
@@ -1743,7 +1743,7 @@ static void DIS_CALL_CO (Z80 *z80, Z80Byte op, Z80Word *pc)
     w=Z80_Dis_FetchWord(z80,pc);
     con=z80_dis_condition[(op-0xc0)/8];
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("call",Z80_Dis_Printf("%s,%s",con,p));
     else
 	Z80_Dis_Set("call",Z80_Dis_Printf("%s,$%.4x",con,w));
@@ -1756,7 +1756,7 @@ static void DIS_CALL (Z80 *z80, Z80Byte op, Z80Word *pc)
 
     w=Z80_Dis_FetchWord(z80,pc);
 
-    if ((p=GetLabel(w)))
+    if ((p=GetLabel(z80, w)))
 	Z80_Dis_Set("call",Z80_Dis_Printf("%s",p));
     else
 	Z80_Dis_Set("call",Z80_Dis_Printf("$%.4x",w));

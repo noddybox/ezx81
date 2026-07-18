@@ -246,9 +246,10 @@ Z80Val  Z80GetTimer(Z80 *cpu, Z80Timer timer);
 void    Z80SetTimer(Z80 *cpu, Z80Timer timer, Z80Val cycles);
 
 
-/* Set address to label mappings for the disassembler
+/* Set address to label mappings for the disassembler.  Note the address
+   of the array is stored so it must persist.
 */
-void	Z80SetLabels(Z80Label labels[]);
+void	Z80SetLabels(Z80 *cpu, Z80Label labels[]);
 
 
 /* Simple disassembly of memory accessed through read_for_disassem.

@@ -98,6 +98,8 @@ struct Z80
     int			last_cb;
 
     Z80Val		timer[3];
+
+    Z80Label		*labels;
 };
 
 
@@ -210,11 +212,6 @@ struct Z80
 
 #define IN(P)			(cpu->pread?cpu->pread(cpu,P):0)
 
-
-
-/* ---------------------------------------- LABELS
-*/
-extern Z80Label			*z80_labels;
 
 
 /* ---------------------------------------- GLOBAL GENERAL OPCODES/ROUTINES

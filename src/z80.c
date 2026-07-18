@@ -31,8 +31,6 @@
 #include "z80.h"
 #include "z80_private.h"
 
-Z80Label        *z80_labels=NULL;
-
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
 static void InitTables()
@@ -142,6 +140,8 @@ Z80	*Z80Init(Z80ReadMemory read_memory,
 	for(f=0;f<eZ80_NO_CALLBACK;f++)
 	    for(r=0;r<MAX_PER_CALLBACK;r++)
 		cpu->callback[f][r]=NULL;
+
+	cpu->labels = NULL;
 
 	Z80Reset(cpu);
     }
@@ -336,9 +336,9 @@ Z80Val Z80Cycles(Z80 *cpu)
 }
 
 
-void Z80SetLabels(Z80Label labels[])
+void Z80SetLabels(Z80 *cpu, Z80Label labels[])
 {
-    z80_labels=labels;
+    cpu->labels=labels;
 }
 
 
