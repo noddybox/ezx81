@@ -23,10 +23,6 @@
     $Id$
 
 */
-static const char ident[]="$Id$";
-
-#include "z80_config.h"
-
 #ifdef ENABLE_DISASSEM
 
 #include <stdio.h>
@@ -64,11 +60,7 @@ const char *Z80_Dis_Printf(const char *format, ...)
 
 Z80Byte Z80_Dis_FetchByte(Z80 *cpu, Z80Word *pc)
 {
-#ifdef ENABLE_ARRAY_MEMORY
-    return Z80_MEMORY[(*pc)++];
-#else
-    return cpu->priv->disread(cpu,(*pc)++);
-#endif
+    return cpu->disread(cpu,(*pc)++);
 }
 
 
@@ -1460,11 +1452,7 @@ static void DIS_DJNZ (Z80 *z80, Z80Byte op, Z80Word *pc)
 {
     Z80Word new;
 
-#ifdef ENABLE_ARRAY_MEMORY
-    new=*pc+(Z80Relative)Z80_MEMORY[*pc]+1;
-#else
-    new=*pc+(Z80Relative)z80->priv->disread(z80,*pc)+1;
-#endif
+    new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
     (*pc)++;
     Z80_Dis_Set("djnz",Z80_Dis_Printf("$%.4x",new));
 }
@@ -1479,11 +1467,7 @@ static void DIS_JR (Z80 *z80, Z80Byte op, Z80Word *pc)
     Z80Word new;
     const char *p;
 
-#ifdef ENABLE_ARRAY_MEMORY
-    new=*pc+(Z80Relative)Z80_MEMORY[*pc]+1;
-#else
-    new=*pc+(Z80Relative)z80->priv->disread(z80,*pc)+1;
-#endif
+    new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
     (*pc)++;
 
     if ((p=GetLabel(new)))
@@ -1504,11 +1488,7 @@ static void DIS_JR_CO (Z80 *z80, Z80Byte op, Z80Word *pc)
     const char *p;
 
     con=z80_dis_condition[(op-0x20)/8];
-#ifdef ENABLE_ARRAY_MEMORY
-    new=*pc+(Z80Relative)Z80_MEMORY[*pc]+1;
-#else
-    new=*pc+(Z80Relative)z80->priv->disread(z80,*pc)+1;
-#endif
+    new=*pc+(Z80Relative)z80->disread(z80,*pc)+1;
     (*pc)++;
 
     if ((p=GetLabel(new)))

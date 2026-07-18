@@ -158,7 +158,7 @@ void GFXInit(void)
     if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
         Exit("Failed to init SDL: %s\n",SDL_GetError());
 
-    if (!(window=SDL_CreateWindow("eSPEC",
+    if (!(window=SDL_CreateWindow("eZX81",
                                   SDL_WINDOWPOS_UNDEFINED,
                                   SDL_WINDOWPOS_UNDEFINED,
                                   GFX_WIDTH*scale,

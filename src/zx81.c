@@ -238,11 +238,16 @@ static const char *ConvertFilename(Z80Word addr)
 
 static void LoadTape(Z80 *cpu)
 {
-    const char *p=ConvertFilename(cpu->DE.w);
+    Z80State state;
+    const char *p;
     char path[FILENAME_MAX];
     FILE *fp;
     Z80Word addr;
     int c;
+
+    Z80GetState(cpu, &state);
+
+    p=ConvertFilename(state.DE);
 
     if (strlen(p)==0)
     {
@@ -277,11 +282,16 @@ static void LoadTape(Z80 *cpu)
 
 static void SaveTape(Z80 *cpu)
 {
-    const char *p=ConvertFilename(cpu->DE.w);
+    Z80State state;
+    const char *p;
     char path[FILENAME_MAX];
     FILE *fp;
     Z80Word start;
     Z80Word end;
+
+    Z80GetState(cpu, &state);
+
+    p=ConvertFilename(state.DE);
 
     if (strlen(p)==0)
     {
@@ -332,6 +342,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
 
 static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 {
+    Z80State state;
     Z80Word base;
     int x,y;
     int inv;
@@ -339,6 +350,8 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 
     if (!scr_enable)
     	return;
+
+    Z80GetState(z80, &state);
 
     /* Extra check due possibly dodgy ULA emulation
     */
@@ -356,7 +369,7 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 	inv=val&0x80;
 	val&=0x3f;
 
-	base=((Z80Word)z80->I<<8)|(val<<3)|ULA.c;
+	base=((Z80Word)state.I<<8)|(val<<3)|ULA.c;
 
 	if (inv)
 	{
@@ -385,6 +398,9 @@ static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
     static Z80Byte last_R;
+    Z80State state;
+
+    Z80GetState(z80, &state);
 
     if (nmigen && val>NMI_PERIOD)
     {
@@ -396,7 +412,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 
     if (hsync && !nmigen)
     {
-    	if (last_R&0x40 && !(z80->R&0x40))
+    	if (last_R&0x40 && !(state.R&0x40))
 	{
 	    Z80Interrupt(z80,0xff);
 	    ULA.y++;
@@ -406,7 +422,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	}
     }
 
-    last_R=z80->R;
+    last_R=state.R;
 
     return TRUE;
 }

@@ -78,7 +78,7 @@ typedef struct
 
 typedef struct
 {
-    Z80		s;
+    Z80State	s;
     Z80Val	c;
     MemTrace	hl[TRACEMEM_WIN];
     MemTrace	de[TRACEMEM_WIN];
@@ -135,75 +135,78 @@ static int Address(Z80 *z80, const char *p, Z80Word *addr)
 
 static int Expand(void *client, const char *p, long *res)
 {
+    Z80State state;
     Z80 *cpu;
     int ok=TRUE;
 
     cpu=client;
 
+    Z80GetState(cpu, &state);
+
     if (StrEq(p,"AF"))
-    	*res=cpu->AF.w;
+    	*res=state.AF;
     else if (StrEq(p,"BC"))
-    	*res=cpu->BC.w;
+    	*res=state.BC;
     else if (StrEq(p,"DE"))
-    	*res=cpu->DE.w;
+    	*res=state.DE;
     else if (StrEq(p,"HL"))
-    	*res=cpu->HL.w;
+    	*res=state.HL;
     else if (StrEq(p,"IX"))
-    	*res=cpu->IX.w;
+    	*res=state.IX;
     else if (StrEq(p,"IY"))
-    	*res=cpu->IY.w;
+    	*res=state.IY;
     else if (StrEq(p,"SP"))
-    	*res=cpu->SP;
+    	*res=state.SP;
     else if (StrEq(p,"PC"))
-    	*res=cpu->PC;
+    	*res=state.PC;
     else if (StrEq(p,"A"))
-    	*res=HI(cpu->AF.w);
+    	*res=HI(state.AF);
     else if (StrEq(p,"F"))
-    	*res=LO(cpu->AF.w);
+    	*res=LO(state.AF);
     else if (StrEq(p,"B"))
-    	*res=HI(cpu->BC.w);
+    	*res=HI(state.BC);
     else if (StrEq(p,"C"))
-    	*res=LO(cpu->BC.w);
+    	*res=LO(state.BC);
     else if (StrEq(p,"D"))
-    	*res=HI(cpu->DE.w);
+    	*res=HI(state.DE);
     else if (StrEq(p,"E"))
-    	*res=LO(cpu->DE.w);
+    	*res=LO(state.DE);
     else if (StrEq(p,"H"))
-    	*res=HI(cpu->HL.w);
+    	*res=HI(state.HL);
     else if (StrEq(p,"L"))
-    	*res=LO(cpu->HL.w);
+    	*res=LO(state.HL);
     else if (StrEq(p,"AF_"))
-    	*res=cpu->AF_;
+    	*res=state.AF_;
     else if (StrEq(p,"BC_"))
-    	*res=cpu->BC_;
+    	*res=state.BC_;
     else if (StrEq(p,"DE_"))
-    	*res=cpu->DE_;
+    	*res=state.DE_;
     else if (StrEq(p,"HL_"))
-    	*res=cpu->HL_;
+    	*res=state.HL_;
     else if (StrEq(p,"A_"))
-    	*res=HI(cpu->AF_);
+    	*res=HI(state.AF_);
     else if (StrEq(p,"F_"))
-    	*res=LO(cpu->AF_);
+    	*res=LO(state.AF_);
     else if (StrEq(p,"B_"))
-    	*res=HI(cpu->BC_);
+    	*res=HI(state.BC_);
     else if (StrEq(p,"C_"))
-    	*res=LO(cpu->BC_);
+    	*res=LO(state.BC_);
     else if (StrEq(p,"D_"))
-    	*res=HI(cpu->DE_);
+    	*res=HI(state.DE_);
     else if (StrEq(p,"E_"))
-    	*res=LO(cpu->DE_);
+    	*res=LO(state.DE_);
     else if (StrEq(p,"H_"))
-    	*res=HI(cpu->HL_);
+    	*res=HI(state.HL_);
     else if (StrEq(p,"L_"))
-	*res=LO(cpu->HL_);
+	*res=LO(state.HL_);
     else if (StrEq(p,"IM"))
-	*res=cpu->IM;
+	*res=state.IM;
     else if (StrEq(p,"R"))
-	*res=cpu->R;
+	*res=state.R;
     else if (StrEq(p,"IFF1"))
-	*res=cpu->IFF1;
+	*res=state.IFF1;
     else if (StrEq(p,"IFF2"))
-	*res=cpu->IFF2;
+	*res=state.IFF2;
     else if (p[0]=='@')
     {
 	Z80Word n;
@@ -319,35 +322,44 @@ static const char *FlagString(Z80Byte flag)
 }
 
 
-int DisplayZ80State(Z80 *s, Z80Val cycle, int y, Uint32 col)
+int DisplayZ80State(Z80State s, Z80Val cycle, int y, Uint32 col)
 {
     GFXPrintPaper(0,y,col,BLACK,
 		  "PC=%4.4x  A=%2.2x     F=%s",
-		  s->PC,s->AF.w>>8,FlagString(s->AF.w&0xff));
+		  s.PC,s.AF>>8,FlagString(s.AF&0xff));
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
     		  "BC=%4.4x  DE=%4.4x  HL=%4.4x",
-		  s->BC.w,s->DE.w,s->HL.w);
+		  s.BC,s.DE,s.HL);
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
     		  "IX=%4.4x  IY=%4.4x  SP=%4.4x",
-		  s->IX.w,s->IY.w,s->SP);
+		  s.IX,s.IY,s.SP);
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
     		  "AF'=%4.4x BC'=%4.4x DE'=%4.4x HL'=%4.4x",
-		  s->AF_,s->BC_,s->DE_,s->HL_);
+		  s.AF_,s.BC_,s.DE_,s.HL_);
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
     		  "I=%2.2x     IM=%2.2x    R=%2.2x",
-		  s->I,s->IM,s->R);
+		  s.I,s.IM,s.R);
     y+=8;
     GFXPrintPaper(0,y,col,BLACK,
     		  "IFF1=%2.2x  IFF2=%2.2x  CY=%8.8lx",
-		  s->IFF1,s->IFF2,cycle);
+		  s.IFF1,s.IFF2,cycle);
 
     return y+8;
 }
 
+void DisplayState(Z80 *z80)
+{
+    Z80State state;
+    int y;
+
+    Z80GetState(z80, &state);
+    y=DisplayZ80State(state,Z80Cycles(z80),GFX_HEIGHT/2,RED);
+    GFXPrintPaper(0,y,GREEN,BLACK,"%s",ZX81Info(z80));
+}
 
 static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
 {
@@ -387,7 +399,7 @@ static void EnterLong(const char *prompt, long *l)
 static void DoDisassem(Z80 *z80)
 {
     static int hexmode=FALSE;
-    Z80Word pc=z80->PC;
+    Z80Word pc=Z80GetPC(z80);
     int quit=FALSE;
 
     while(!quit)
@@ -591,11 +603,11 @@ static int Instruction(Z80 *z80, Z80Val data)
     {
 	Trace t;
 
-	t.s=*z80;
+	Z80GetState(z80, &t.s);
 	t.c=Z80Cycles(z80);
 
-	GetMemTrace(z80,t.hl,t.s.HL.w-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	GetMemTrace(z80,t.de,t.s.DE.w-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	GetMemTrace(z80,t.hl,t.s.HL-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	GetMemTrace(z80,t.de,t.s.DE-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
 	GetMemTrace(z80,t.sp,t.s.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
 
 	fwrite(&t,sizeof t,1,trace);
@@ -721,11 +733,11 @@ static void PlaybackTrace(Z80 *z80)
 	if (showmem)
 	{
 	    DisplayTraceMem(0,136,"MEM (SP)",t.sp,t.s.SP);
-	    DisplayTraceMem(100,136,"MEM (HL)",t.hl,t.s.HL.w);
-	    DisplayTraceMem(200,136,"MEM (DE)",t.de,t.s.DE.w);
+	    DisplayTraceMem(100,136,"MEM (HL)",t.hl,t.s.HL);
+	    DisplayTraceMem(200,136,"MEM (DE)",t.de,t.s.DE);
 	}
 	else
-	    DisplayZ80State(&t.s,t.c,136,WHITE);
+	    DisplayZ80State(t.s,t.c,136,WHITE);
 
 	for(f=0;f<10;f++)
 	{
@@ -969,6 +981,7 @@ static void DoMonitor(Z80 *z80)
 
     while(!quit)
     {
+	Z80State state;
 	Z80Word pc;
 	MemTrace mt[TRACEMEM_WIN];
 	const char *brkpoint;
@@ -982,24 +995,29 @@ static void DoMonitor(Z80 *z80)
     	CentrePaper("MONITOR",0,WHITE,BLACK);
     	CentrePaper("Press F1 for help",9,RED,BLACK);
 
+	Z80GetState(z80, &state);
+
 	if (showmem)
 	{
-	    GetMemTrace(z80,mt,z80->SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	    DisplayTraceMem(0,136,"MEM (SP)",mt,z80->SP);
-	    GetMemTrace(z80,mt,z80->HL.w-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	    DisplayTraceMem(100,136,"MEM (HL)",mt,z80->HL.w);
-	    GetMemTrace(z80,mt,z80->DE.w-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
-	    DisplayTraceMem(200,136,"MEM (DE)",mt,z80->DE.w);
+	    GetMemTrace(z80,mt,state.SP-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	    DisplayTraceMem(0,136,"MEM (SP)",mt,state.SP);
+	    GetMemTrace(z80,mt,state.HL-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	    DisplayTraceMem(100,136,"MEM (HL)",mt,state.HL);
+	    GetMemTrace(z80,mt,state.DE-(TRACEMEM_WIN/2+1),TRACEMEM_WIN);
+	    DisplayTraceMem(200,136,"MEM (DE)",mt,state.DE);
 	}
 	else
 	{
+	    Z80State state;
 	    int y;
 
-	    y=DisplayZ80State(z80,Z80Cycles(z80),136,WHITE);
+	    Z80GetState(z80, &state);
+
+	    y=DisplayZ80State(state,Z80Cycles(z80),136,WHITE);
 	    GFXPrint(0,y,GREEN,"%s",ZX81Info(z80));
 	}
 
-	pc=z80->PC;
+	pc=Z80GetPC(z80);
 
 	for(f=0;f<10;f++)
 	{
@@ -1112,6 +1130,7 @@ static void DoMonitor(Z80 *z80)
 */
 int MemoryMenu(Z80 *z80)
 {
+    Z80State state;
     SDL_Event *e;
     int done=FALSE;
     int quit=FALSE;
@@ -1180,10 +1199,11 @@ int MemoryMenu(Z80 *z80)
 		break;
 
 	    case SDLK_s:
+		Z80GetState(z80, &state);
 		GFXClear(BLACK);
 		Centre("CURRENT STATE",0,WHITE);
 		Centre("Press a key",9,RED);
-		y=DisplayZ80State(z80,Z80Cycles(z80),20,WHITE);
+		y=DisplayZ80State(state,Z80Cycles(z80),20,WHITE);
 		GFXPrint(0,y,GREEN,"%s",ZX81Info(z80));
 		GFXEndFrame(FALSE);
 		GFXWaitKey();
@@ -1200,15 +1220,6 @@ int MemoryMenu(Z80 *z80)
 
     GFXClear(BLACK);
     return quit;
-}
-
-
-void DisplayState(Z80 *z80)
-{
-    int y;
-
-    y=DisplayZ80State(z80,Z80Cycles(z80),GFX_HEIGHT/2,RED);
-    GFXPrintPaper(0,y,GREEN,BLACK,"%s",ZX81Info(z80));
 }
 
 

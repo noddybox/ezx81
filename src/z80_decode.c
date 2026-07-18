@@ -29,8 +29,6 @@
 #include "z80.h"
 #include "z80_private.h"
 
-static const char ident[]="$Id$";
-
 /* ---------------------------------------- TABLES AND INIT
 */
 static Z80Byte		PSZtable[512];
@@ -40,11 +38,8 @@ static Z80Byte		Stable[512];
 static Z80Byte		Ztable[512];
 
 
-int Z80_HI_WORD;
-int Z80_LO_WORD;
-
-#define HI Z80_HI_WORD
-#define LO Z80_LO_WORD
+static int HI;
+static int LO;
 
 /* ---------------------------------------- MISC FUNCTIONS
 */
@@ -121,19 +116,17 @@ void Z80_InitialiseInternals(void)
     }
 }
 
-#ifndef ENABLE_ARRAY_MEMORY
-static Z80Word FPEEKW(Z80 *cpu, Z80Word addr)
+Z80Word FPEEKW(Z80 *cpu, Z80Word addr)
 {
     return (PEEK(addr) | (Z80Word)PEEK(addr+1)<<8);
 }
 
 
-static void FPOKEW(Z80 *cpu, Z80Word addr, Z80Word val)
+void FPOKEW(Z80 *cpu, Z80Word addr, Z80Word val)
 {
-    PRIV->mwrite(cpu,addr,val);
-    PRIV->mwrite(cpu,addr+1,val>>8);
+    cpu->mwrite(cpu,addr,val);
+    cpu->mwrite(cpu,addr+1,val>>8);
 }
-#endif
 
 
 /* ---------------------------------------- GENERAL MACROS
@@ -279,35 +272,35 @@ do { \
 
 #define OP_ON_MEM(OP,addr) \
 do { \
-    Z80Byte memop=PEEK(addr); \
+    Z80Byte memop=cpu->mread(cpu,addr); \
     OP(memop); \
-    POKE(addr,memop); \
+    cpu->mwrite(cpu,addr,memop); \
 } while(0)
 
 
 #define OP_ON_MEM_WITH_ARG(OP,addr,arg) \
 do { \
-    Z80Byte memop=PEEK(addr); \
+    Z80Byte memop=cpu->mread(cpu,addr); \
     OP(memop,arg); \
-    POKE(addr,memop); \
+    cpu->mwrite(cpu,addr,memop); \
 } while(0)
 
 
 #define OP_ON_MEM_WITH_COPY(OP,addr,copy) \
 do { \
-    Z80Byte memop=PEEK(addr); \
+    Z80Byte memop=cpu->mread(cpu,addr); \
     OP(memop); \
     copy=memop; \
-    POKE(addr,memop); \
+    cpu->mwrite(cpu,addr,memop); \
 } while(0)
 
 
 #define OP_ON_MEM_WITH_ARG_AND_COPY(OP,addr,arg,copy) \
 do { \
-    Z80Byte memop=PEEK(addr); \
+    Z80Byte memop=cpu->mread(cpu,addr); \
     OP(memop,arg); \
     copy=memop; \
-    POKE(addr,memop); \
+    cpu->mwrite(cpu,addr,memop); \
 } while(0)
 
 
@@ -753,7 +746,7 @@ do { \
     case BASE+6:	/* LD DEST,(HL) */ \
 	TSTATE(7); \
 	OFFSET(off); \
-	DEST2=PEEK(*HL+off); \
+	DEST2=cpu->mread(cpu,*HL+off); \
 	break; \
  \
     case BASE+7:	/* LD DEST,A */ \
@@ -1023,9 +1016,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x40:	/* IN B,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->BC.b[HI]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->BC.b[HI]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1038,7 +1031,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x41:	/* OUT (C),B */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->BC.b[HI]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->BC.b[HI]);
 	    break;
 
 	case 0x42:	/* SBC HL,BC */
@@ -1082,9 +1075,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x48:	/* IN C,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->BC.b[LO]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->BC.b[LO]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1097,7 +1090,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x49:	/* OUT (C),C */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->BC.b[LO]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->BC.b[LO]);
 	    break;
 
 	case 0x4a:	/* ADC HL,BC */
@@ -1142,9 +1135,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x50:	/* IN D,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->DE.b[HI]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->DE.b[HI]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1157,7 +1150,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x51:	/* OUT (C),D */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->DE.b[HI]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->DE.b[HI]);
 	    break;
 
 	case 0x52:	/* SBC HL,DE */
@@ -1201,9 +1194,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x58:	/* IN E,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->DE.b[LO]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->DE.b[LO]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1216,7 +1209,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x59:	/* OUT (C),E */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->DE.b[LO]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->DE.b[LO]);
 	    break;
 
 	case 0x5a:	/* ADC HL,DE */
@@ -1260,9 +1253,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x60:	/* IN H,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->HL.b[HI]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->HL.b[HI]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1275,7 +1268,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x61:	/* OUT (C),H */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->HL.b[HI]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->HL.b[HI]);
 	    break;
 
 	case 0x62:	/* SBC HL,HL */
@@ -1330,9 +1323,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x68:	/* IN L,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->HL.b[LO]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->HL.b[LO]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1345,7 +1338,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x69:	/* OUT (C),L */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->HL.b[LO]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->HL.b[LO]);
 	    break;
 
 	case 0x6a:	/* ADC HL,HL */
@@ -1403,9 +1396,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		b=PRIV->pread(cpu,cpu->BC.w);
+		b=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1419,7 +1412,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x71:	/* OUT (C) */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,0);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,0);
 	    break;
 
 	case 0x72:	/* SBC HL,SP */
@@ -1463,9 +1456,9 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 	case 0x78:	/* IN A,(C) */
 	    TSTATE(12);
 
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
-		cpu->AF.b[HI]=PRIV->pread(cpu,cpu->BC.w);
+		cpu->AF.b[HI]=cpu->pread(cpu,cpu->BC.w);
 	    }
 	    else
 	    {
@@ -1478,7 +1471,7 @@ static void DecodeED(Z80 *cpu, Z80Byte opcode)
 
 	case 0x79:	/* OUT (C),A */
 	    TSTATE(12);
-	    if (PRIV->pwrite) PRIV->pwrite(cpu,cpu->BC.w,cpu->AF.b[HI]);
+	    if (cpu->pwrite) cpu->pwrite(cpu,cpu->BC.w,cpu->AF.b[HI]);
 	    break;
 
 	case 0x7a:	/* ADC HL,SP */
@@ -1700,7 +1693,7 @@ static void ShiftedDecodeCB(Z80 *cpu, Z80Byte opcode, Z80Relative offset)
 
     /* See if we've come here from a IX/IY shift.
     */
-    switch (PRIV->shift)
+    switch (cpu->shift)
     {
     	case 0xdd:
 	    addr=cpu->IX.w+offset;
@@ -1765,7 +1758,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 
     /* See if we've come here from a IX/IY shift
     */
-    switch (PRIV->shift)
+    switch (cpu->shift)
     {
     	case 0xdd:
 	    HL=&(cpu->IX.w);
@@ -2068,7 +2061,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0x36:	/* LD (HL),n */
 	    TSTATE(10);
 	    OFFSET(off);
-	    POKE(*HL+off,FETCH_BYTE);
+	    cpu->mwrite(cpu,*HL+off,FETCH_BYTE);
 	    break;
 
 	case 0x37:	/* SCF */
@@ -2089,7 +2082,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 
 	case 0x3a:	/* LD A,(nnnn) */
 	    TSTATE(13);
-	    cpu->AF.b[HI]=PEEK(FETCH_WORD);
+	    cpu->AF.b[HI]=cpu->mread(cpu,FETCH_WORD);
 	    break;
 
 	case 0x3b:	/* DEC SP */
@@ -2134,53 +2127,53 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	case 0x70:	/* LD (HL),B */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->BC.b[HI]);
+	    cpu->mwrite(cpu,*HL+off,cpu->BC.b[HI]);
 	    break;
 
 	case 0x71:	/* LD (HL),C */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->BC.b[LO]);
+	    cpu->mwrite(cpu,*HL+off,cpu->BC.b[LO]);
 	    break;
 
 	case 0x72:	/* LD (HL),D */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->DE.b[HI]);
+	    cpu->mwrite(cpu,*HL+off,cpu->DE.b[HI]);
 	    break;
 
 	case 0x73:	/* LD (HL),E */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->DE.b[LO]);
+	    cpu->mwrite(cpu,*HL+off,cpu->DE.b[LO]);
 	    break;
 
 	case 0x74:	/* LD (HL),H */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->HL.b[HI]);
+	    cpu->mwrite(cpu,*HL+off,cpu->HL.b[HI]);
 	    break;
 
 	case 0x75:	/* LD (HL),L */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->HL.b[LO]);
+	    cpu->mwrite(cpu,*HL+off,cpu->HL.b[LO]);
 	    break;
 
 	case 0x76:	/* HALT */
 	    TSTATE(4);
 	    cpu->PC--;
 
-	    if (!PRIV->halt)
+	    if (!cpu->halt)
 		CALLBACK(eZ80_Halt,1);
 
-	    PRIV->halt=TRUE;
+	    cpu->halt=TRUE;
 	    break;
 
 	case 0x77:	/* LD (HL),A */
 	    TSTATE(7);
 	    OFFSET(off);
-	    POKE(*HL+off,cpu->AF.b[HI]);
+	    cpu->mwrite(cpu,*HL+off,cpu->AF.b[HI]);
 	    break;
 
 	LD_BLOCK(0x78,cpu->AF.b[HI],cpu->AF.b[HI])
@@ -2247,7 +2240,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 
 	    /* Check for previous IX/IY shift.
 	    */
-	    if (PRIV->shift!=0)
+	    if (cpu->shift!=0)
 	    {
 		Z80Relative cb_offset;
 
@@ -2292,14 +2285,8 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 
 	case 0xd3:	/* OUT (n),A */
 	    TSTATE(11);
-	    if (PRIV->pwrite)
-	    {
-		Z80Word port;
-
-		port=FETCH_BYTE;
-		port|=(Z80Word)cpu->AF.b[HI]<<8;
-	    	PRIV->pwrite(cpu,port,cpu->AF.b[HI]);
-	    }
+	    if (cpu->pwrite)
+	    	cpu->pwrite(cpu,FETCH_BYTE,cpu->AF.b[HI]);
 	    else
 	    	cpu->PC++;
 	    break;
@@ -2339,13 +2326,13 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 
 	case 0xdb:	/* IN A,(n) */
 	    TSTATE(11);
-	    if (PRIV->pread)
+	    if (cpu->pread)
 	    {
 		Z80Word port;
 
 		port=FETCH_BYTE;
 		port|=(Z80Word)cpu->AF.b[HI]<<8;
-		cpu->AF.b[HI]=PRIV->pread(cpu,port);
+		cpu->AF.b[HI]=cpu->pread(cpu,port);
 	    }
 	    else
 	    	cpu->PC++;
@@ -2359,7 +2346,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	    TSTATE(4);
 	    INC_R;
 
-	    PRIV->shift=opcode;
+	    cpu->shift=opcode;
 	    Z80_Decode(cpu,FETCH_BYTE);
 	    break;
 
@@ -2513,7 +2500,7 @@ void Z80_Decode(Z80 *cpu, Z80Byte opcode)
 	    TSTATE(4);
 	    INC_R;
 
-	    PRIV->shift=opcode;
+	    cpu->shift=opcode;
 	    Z80_Decode(cpu,FETCH_BYTE);
 	    break;
 

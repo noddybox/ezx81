@@ -20,20 +20,21 @@
 
     -------------------------------------------------------------------------
 
-    Z80 CPU
+    $Id$
 
 */
 
 #ifndef Z80_H
 #define Z80_H
 
-/* Configuration
-*/
-#include "z80_config.h"
-
-
 /* ---------------------------------------- TYPES
 */
+
+/* The processor
+*/
+struct Z80;
+typedef struct Z80 Z80;
+
 
 /* Large unsigned type
 */
@@ -53,53 +54,6 @@ typedef signed char Z80Relative;
 /* 16-bit type.  The emulation will exit with code 2 if this isn't 16 bits.
 */
 typedef unsigned short Z80Word;
-
-
-/* A Z80 16-bit register.  To access the HI/LO component use the indexes
-   Z80_HI_WORD and Z80_LO_WORD which will be initialised once Z80Init has been
-   called.
-*/
-typedef union
-{
-    Z80Word		w;
-    Z80Byte		b[2];
-} Z80Reg;
-
-extern int Z80_HI_WORD;
-extern int Z80_LO_WORD;
-
-
-/* The processor
-*/
-struct Z80Private;
-
-typedef struct
-{
-    Z80Word		PC;
-
-    Z80Reg		AF;
-    Z80Reg		BC;
-    Z80Reg		DE;
-    Z80Reg		HL;
-
-    Z80Word		AF_;
-    Z80Word		BC_;
-    Z80Word		DE_;
-    Z80Word		HL_;
-
-    Z80Reg		IX;
-    Z80Reg		IY;
-
-    Z80Word		SP;
-
-    Z80Byte		IFF1;
-    Z80Byte		IFF2;
-    Z80Byte		IM;
-    Z80Byte		I;
-    Z80Byte		R;
-
-    struct Z80Private	*priv;
-} Z80;
 
 
 /* Interfaces used to handle memory
@@ -141,6 +95,36 @@ typedef enum
 } Z80CallbackReason;
 
 
+/* Get/settable state of the Z80
+*/
+typedef struct
+{
+    Z80Word	PC;
+    Z80Word	SP;
+
+    Z80Val	cycle;
+
+    Z80Word	AF;
+    Z80Word	BC;
+    Z80Word	DE;
+    Z80Word	HL;
+
+    Z80Word	AF_;	/* Alternate registers */
+    Z80Word	BC_;
+    Z80Word	DE_;
+    Z80Word	HL_;
+
+    Z80Word	IX;
+    Z80Word	IY;
+
+    Z80Byte	IFF1;
+    Z80Byte	IFF2;
+    Z80Byte	IM;
+    Z80Byte	I;
+    Z80Byte	R;
+} Z80State;
+
+
 /* Flags in the F register
 */
 typedef enum
@@ -167,27 +151,47 @@ typedef struct
 } Z80Label;
 
 
+/* The Z80 provides a number of cycle timers
+*/
+typedef enum
+{
+    eZ80_Timer_1,
+    eZ80_Timer_2,
+    eZ80_Timer_3
+} Z80Timer;
+
+
 /* ---------------------------------------- INTERFACES
 */
 
 
 /* Initialises the processor.  
 */
-#ifdef ENABLE_ARRAY_MEMORY
-Z80	*Z80Init(Z80ReadPort read_port,
-		 Z80WritePort write_port);
-#else
 Z80	*Z80Init(Z80ReadMemory read_memory,
 		 Z80WriteMemory write_memory,
 		 Z80ReadPort read_port,
 		 Z80WritePort write_port,
 		 Z80ReadMemory read_for_disassem);
-#endif
 
 
 /* Resets the processor.
 */
 void	Z80Reset(Z80 *cpu);
+
+
+/* Sets the PC
+*/
+void	Z80SetPC(Z80 *cpu, Z80Word PC);
+
+
+/* Gets the PC
+*/
+Z80Word	Z80GetPC(Z80 *cpu);
+
+
+/* Sets the cycle count to the specified count
+*/
+void	Z80ResetCycles(Z80 *cpu, Z80Val cycles);
 
 
 /* Lodge a callback to be invoked after special events.  Returns FALSE
@@ -229,10 +233,17 @@ int	Z80SingleStep(Z80 *cpu);
 void	Z80Exec(Z80 *cpu);
 
 
-/* Manipulate the cylce count of the Z80
+/* Interrogate the state of the Z80
 */
 Z80Val	Z80Cycles(Z80 *cpu);
-void	Z80ResetCycles(Z80 *cpu, Z80Val cycles);
+void	Z80GetState(Z80 *cpu, Z80State *state);
+void	Z80SetState(Z80 *cpu, const Z80State *state);
+
+
+/* Timers that count in cycle counts
+*/
+Z80Val  Z80GetTimer(Z80 *cpu, Z80Timer timer);
+void    Z80SetTimer(Z80 *cpu, Z80Timer timer, Z80Val cycles);
 
 
 /* Set address to label mappings for the disassembler
@@ -240,14 +251,10 @@ void	Z80ResetCycles(Z80 *cpu, Z80Val cycles);
 void	Z80SetLabels(Z80Label labels[]);
 
 
-/* Simple disassembly of memory accessed through read_for_disassem, or 
-   Z80_MEMORY as appropriate.  addr is updated on exit.
+/* Simple disassembly of memory accessed through read_for_disassem.
+   addr is updated on exit.
 */
 const char *Z80Disassemble(Z80 *cpu, Z80Word *addr);
-
-/* Gets the PC                                                                  
-*/                                                                              
-Z80Word	Z80GetPC(Z80 *cpu);                                                     
 
 #endif
 
