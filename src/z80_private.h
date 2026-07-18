@@ -99,7 +99,7 @@ struct Z80
 
     Z80Val		timer[3];
 
-    Z80Label		*labels;
+    const Z80Label	*labels;
 };
 
 

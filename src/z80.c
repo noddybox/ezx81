@@ -336,7 +336,7 @@ Z80Val Z80Cycles(Z80 *cpu)
 }
 
 
-void Z80SetLabels(Z80 *cpu, Z80Label labels[])
+void Z80SetLabels(Z80 *cpu, const Z80Label labels[])
 {
     cpu->labels=labels;
 }
