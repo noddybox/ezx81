@@ -1,6 +1,6 @@
 /*
 
-    ezx81 - X11 ZX81 emulator
+    ezx81 - ZX81 emulator
 
     Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
 
@@ -23,8 +23,6 @@
     Wrapper to SDL
 
 */
-static const char ident[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -156,9 +154,9 @@ void GFXInit(void)
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
     if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
-        Exit("Failed to init SDL: %s\n",SDL_GetError());
+	Exit("Failed to init SDL: %s\n",SDL_GetError());
 
-    if (!(window=SDL_CreateWindow("eZX81",
+    if (!(window=SDL_CreateWindow("eSPEC",
                                   SDL_WINDOWPOS_UNDEFINED,
                                   SDL_WINDOWPOS_UNDEFINED,
                                   GFX_WIDTH*scale,

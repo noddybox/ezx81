@@ -1,6 +1,6 @@
 /*
 
-    espec - Sinclair Spectrum emulator
+    ezx81 - ZX81 emulator
 
     Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
 

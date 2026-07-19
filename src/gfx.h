@@ -1,6 +1,6 @@
 /*
 
-    ezx81 - X11 ZX81 emulator
+    ezx81 - ZX81 emulator
 
     Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
 
@@ -24,8 +24,8 @@
 
 */
 
-#ifndef EZX81_GFX_H
-#define EZX81_GFX_H
+#ifndef ESPEC_GFX_H
+#define ESPEC_GFX_H
 
 #include "SDL.h"
 
@@ -53,11 +53,6 @@
 /* Initialise
 */
 void		GFXInit(void);
-
-
-/* Get the SDL_Surface for the screen
-*/
-SDL_Surface	*GFXGetSurface(void);
 
 
 /* Get the pixel value for a colour
@@ -140,6 +135,18 @@ void		GFXPrint(int x, int y, Uint32 col, const char *format, ...);
 */
 void		GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 			      const char *format, ...);
+
+
+/* Draws a simply compressed bitmap.  The data is in the form (where b is a
+   byte from the stream):
+
+    	b < 0x80	Colour (0 Black, 1 Blue, 2 Red, 3 Magenta, 4 Green,
+				5 Cyan, 6 Yellow, 7 White, 8 Grey)
+
+	b >= 0x80	Repeat the last colour b-0x80 times.
+*/
+void		GFXBitmap(int x, int y, int w, int h,
+			  const unsigned char *data);
 
 
 #endif

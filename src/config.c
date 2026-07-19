@@ -1,6 +1,6 @@
 /*
 
-    ezx81 - X11 ZX81 emulator
+    ezx81 - ZX81 emulator
 
     Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
 
