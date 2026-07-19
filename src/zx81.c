@@ -18,7 +18,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-    -------------------------------------------------------------------------
+    ----------------------------------------------------------------
 
     Provides the emulation for the ZX81
 
@@ -49,9 +49,26 @@ static const int	ROMLEN=0x2000;
 static const int	ROM_SAVE=0x2fc;
 static const int	ROM_LOAD=0x347;
 
-static const Z80Val	NMI_PERIOD=208;
+#define ED_SAVE		0xf0
+#define ED_LOAD		0xf1
+#define ED_WAITKEY	0xf2
+#define ED_ENDWAITKEY	0xf3
+#define ED_PAUSE	0xf4
 
-/* The ZX81 screen
+#define SLOW_TSTATES	16000
+#define FAST_TSTATES	(64000*10)
+
+#define E_LINE		16404
+#define LASTK1		16421
+#define LASTK2		16422
+#define MARGIN		16424
+#define FRAMES		16436
+#define CDFLAG		16443
+#define DFILE           0x400c
+
+static Z80Val		FRAME_TSTATES = FAST_TSTATES;
+
+/* The ZX81 screen and emulation
 */
 static int		scr_enable=TRUE;
 
@@ -63,27 +80,20 @@ static int		scr_enable=TRUE;
 #define OFF_X		(GFX_WIDTH-SCR_W)/2
 #define OFF_Y		(GFX_HEIGHT-SCR_H)/2
 
+static int		waitkey=FALSE;
+static int		started=FALSE;
+
+static int		last_I;
+
+static int              fast_mode=FALSE;
+
+/* Memory
+*/
 static Z80Byte		mem[0x10000];
 
 static Z80Word		RAMBOT=0;
 static Z80Word		RAMTOP=0;
 static Z80Word		RAMLEN=0;
-
-/* Counter used when triggering the interrupts for the display
-*/
-static int		nmigen=FALSE;
-static int		hsync=FALSE;
-static int		vsync=FALSE;
-
-/* The ULA
-*/
-static struct
-{
-    int		x;
-    int		y;
-    int		c;
-    int		release;
-} ULA;
 
 /* GFX vars
 */
@@ -94,6 +104,9 @@ static Uint32		black;
 /* The keyboard
 */
 static Z80Byte		matrix[8];
+
+static unsigned		prev_lk1;
+static unsigned		prev_lk2;
 
 typedef struct
 {
@@ -166,29 +179,77 @@ static const MatrixMap keymap[]=
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+#define PEEKW(addr)		(mem[addr] | (Z80Word)mem[addr+1]<<8)
+
+#define POKEW(addr,val)         do					\
+                                {					\
+                                    Z80Word wa=addr;			\
+                                    Z80Word wv=val;			\
+                                    mem[wa]=wv;				\
+                                    mem[wa+1]=wv>>8;			\
+                                } while(0)
+
+static void InstallRomPatch(Z80Word address, const Z80Byte patch[])
+{
+    for(int f = 0; patch[f] != 0xff; f++)
+    {
+    	mem[address + f] = patch[f];
+    }
+}
+
 static void RomPatch(void)
 {
     static const Z80Byte save[]=
     {
-    	0xed, 0xf0,		/* ED F0 illegal op	*/
+    	0xed, ED_SAVE,		/* ED_SAVE illegal op	*/
 	0xc3, 0x07, 0x02,	/* JP $0207		*/
 	0xff			/* End of patch		*/
     };
 
     static const Z80Byte load[]=
     {
-    	0xed, 0xf1,		/* ED F0 illegal op	*/
+    	0xed, ED_LOAD,		/* ED_LOAD illegal op	*/
 	0xc3, 0x07, 0x02,	/* JP $0207		*/
 	0xff			/* End of patch		*/
     };
 
-    int f;
+    static const Z80Byte fast_hack[]=
+    {
+	0xed, ED_WAITKEY,	/* (START KEY WAIT)	*/
+	0xcb,0x46,		/* L: bit 0,(hl)	*/
+	0x28,0xfc,		/* jr z,L		*/
+	0xed, ED_ENDWAITKEY,	/* (END KEY WAIT)	*/
+    	0x00,			/* nop			*/
+	0xff			/* End of patch		*/
+    };
 
-    for(f=0;save[f]!=0xff;f++)
-    	mem[ROM_SAVE+f]=save[f];
+    static const Z80Byte kbd_hack[]=
+    {
+	0x2a,0x25,0x40,		/* ld hl,(LASTK)	*/
+	0xc9,			/* ret			*/
+	0xff			/* End of patch		*/
+    };
 
-    for(f=0;load[f]!=0xff;f++)
-    	mem[ROM_LOAD+f]=load[f];
+    static const Z80Byte pause_hack[]=
+    {
+	0xed, ED_PAUSE,		/* (PAUSE)		*/
+    	0x00,			/* nop			*/
+	0xff			/* End of patch		*/
+    };
+
+    InstallRomPatch(ROM_SAVE, save);
+    InstallRomPatch(ROM_LOAD, load);
+    InstallRomPatch(0x4ca, fast_hack);
+    InstallRomPatch(0x2bb, kbd_hack);
+    InstallRomPatch(0xf3a, pause_hack);
+
+    mem[0x21c]=0x00;
+    mem[0x21d]=0x00;
+
+    /* Remove HALTs as we don't do interrupts
+    */
+    mem[0x0079]=0;
+    mem[0x02ec]=0;
 }
 
 
@@ -320,122 +381,353 @@ static void SaveTape(Z80 *cpu)
 }
 
 
-static int EDCallback(Z80 *z80, Z80Val data)
+static Z80Word FindHiresDFILE(void)
 {
-    switch((Z80Byte)data)
+    /* Somewhat based on the code from xz81, an X-based ZX81 emulator,
+       (C) 1994 Ian Collier.  Search the ZX81's RAM until we find what looks
+       like a hi-res display file.
+
+       Bizarrely the original code used 'f' for a loop counter too...  Another
+       poor soul forever damaged by the ZX81's keyword entry system...
+    */
+    int f;
+
+    for(f=0x8000-(33*192); f>0x4000 ; f--)
     {
-    	case 0xf0:
-	    SaveTape(z80);
-	    break;
+	int v;
 
-    	case 0xf1:
-	    LoadTape(z80);
-	    break;
+	v = mem[f+32];
 
-	default:
-	    break;
+	if (v&0x40)
+	{
+	    int ok = TRUE;
+	    int n;
+
+	    for(n=0;n<192 && ok;n++)
+	    {
+	    	if (mem[f+33*n]&0x40)
+		{
+		    ok = FALSE;
+		}
+
+		if (mem[f+32+33*n] != v)
+		{
+		    ok = FALSE;
+		}
+	    }
+
+	    if (ok)
+	    {
+	    	return f;
+	    }
+	}
     }
 
-    return TRUE;
+    /* All else fails, put the hires dfile at 0x4000 -- at least it should be
+       obvious that the hires won't work for whatever is being run.
+    */
+    return 0x4000;
 }
 
 
-static void ULA_Video_Shifter(Z80 *z80, Z80Byte val)
+/* Perform ZX81 housekeeping functions like updating FRAMES and updating LASTK
+*/
+static void ZX81HouseKeeping(Z80 *z80)
 {
-    Z80State state;
-    Z80Word base;
-    int x,y;
-    int inv;
-    int b;
+    unsigned row;
+    unsigned lastk1;
+    unsigned lastk2;
 
-    if (!scr_enable)
-    	return;
-
-    Z80GetState(z80, &state);
-
-    /* Extra check due possibly dodgy ULA emulation
+    /* British ZX81
     */
-    if (ULA.y>=0 && ULA.y<SCR_H && ULA.x<TXT_W)
+    mem[MARGIN] = 55;
+
+    /* Update FRAMES
+    */
+    if (FRAME_TSTATES == SLOW_TSTATES)
     {
-	Uint32 fg,bg;
+    	Z80Word frame = PEEKW(FRAMES) & 0x7fff;
 
-    	/* Position on screen corresponding to ULA
-	*/
-	x=OFF_X+ULA.x*8;
-	y=OFF_Y+ULA.y;
-
-	/* Get ULA invert state and clear to ULA 6-but code
-	*/
-	inv=val&0x80;
-	val&=0x3f;
-
-	base=((Z80Word)state.I<<8)|(val<<3)|ULA.c;
-
-	if (inv)
+	if (frame)
 	{
-	    fg=white;
-	    bg=black;
-	}
-	else
-	{
-	    fg=black;
-	    bg=white;
+	    frame--;
 	}
 
-	for(b=0;b<8;b++)
+	POKEW(FRAMES,frame|0x8000);
+    }
+
+    if (!started)
+    {
+    	prev_lk1 = 0;
+    	prev_lk2 = 0;
+	return;
+    }
+
+    /* Update LASTK
+    */
+    lastk1 = 0;
+    lastk2 = 0;
+
+    for(row = 0; row < 8; row++)
+    {
+    	unsigned b;
+
+	b = (~matrix[row]&0x1f)<<1;
+
+	if (row == 0)
 	{
-	    if (mem[base]&(1<<(7-b)))
-	    	GFXPlot(x+b,y,fg);
-	    else
-	    	GFXPlot(x+b,y,bg);
+	    unsigned shift;
+
+	    shift=b&2;
+	    b&=~2;
+	    b|=(shift>>1);
+	}
+
+	if (b)
+	{
+	    if (b>1)
+	    {
+		lastk1|=(1<<row);
+	    }
+
+	    lastk2|=b;
 	}
     }
 
-    ULA.x++;
+    if (lastk1 && (lastk1 != prev_lk1 || lastk2 != prev_lk2))
+    {
+    	mem[CDFLAG]|=1;
+    }
+    else
+    {
+    	mem[CDFLAG]&=~1;
+    }
+
+    mem[LASTK1] = lastk1^0xff;
+    mem[LASTK2] = lastk2^0xff;
+
+    prev_lk1 = lastk1;
+    prev_lk2 = lastk2;
+}
+
+
+static void DrawScreenText(Z80State *state)
+{
+    int x,y;
+    int table;
+    Z80Byte *scr;
+
+    GFXStartFrame();
+    GFXClear(white);
+
+    table = state->I << 8;
+    scr = mem + PEEKW(DFILE);
+
+    y = 0;
+
+    while(y < TXT_H)
+    {
+	scr++;
+	x = 0;
+
+	/* 118 is the opcode for HALT
+	*/
+	while(*scr != 118 && x < TXT_W)
+	{
+	    int row;
+	    int c = *scr++;
+
+	    for(row = 0; row < 8; row++)
+	    {
+		int v = mem[table + (c & 0x3f) * 8 + row];
+		int b;
+
+		if (c & 0x80)
+		{
+		    v ^= 0xff;
+		}
+
+		for(b = 0; b < 8; b++)
+		{
+		    GFXPlot(OFF_X + x * 8 + b, OFF_Y + y * 8 + row,
+		    		(v & 0x80) ? black : white);
+		    v = v << 1;
+		}
+	    }
+
+	    x++;
+	}
+
+	y++;
+    }
+
+    GFXEndFrame(TRUE);
+}
+
+
+static void DrawScreenHires(Z80State *state, Z80Word hires_dfile)
+{
+    int x,y;
+    int table;
+    Z80Byte *scr;
+
+    GFXStartFrame();
+    GFXClear(white);
+
+    table = state->I << 8;
+    scr = mem + hires_dfile;
+
+    for(y = 0; y < SCR_H; y++)
+    {
+	for(x = 0; y < SCR_W; x++)
+	{
+	    int c = *scr++;
+	    int v = mem[table + (c & 0x3f) * 8];
+	    int b;
+
+	    if (c & 0x80)
+	    {
+	    	v ^= 0xff;
+	    }
+
+	    for(b = 0; b < 8; b++)
+	    {
+	    	GFXPlot(OFF_X + x, OFF_Y + y, (v & 0x80) ? black : white);
+		v = v << 1;
+	    }
+	}
+    }
+
+    GFXEndFrame(TRUE);
+}
+
+
+static void DrawSnow(void)
+{
+    int x,y;
+
+    GFXStartFrame();
+
+    for(y = 0; y < GFX_HEIGHT; y++)
+    {
+	for(x = 0; x < GFX_WIDTH; x++)
+	{
+	    GFXPlot(x, y, rand() & 1 ? black : white);
+	}
+    }
+
+    GFXEndFrame(TRUE);
 }
 
 
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
-    static Z80Byte last_R;
-    Z80State state;
+    Z80Val current_frame_tstates = FRAME_TSTATES;
 
-    Z80GetState(z80, &state);
-
-    if (nmigen && val>NMI_PERIOD)
+    if (val >= FRAME_TSTATES)
     {
-	Z80ResetCycles(z80,val-NMI_PERIOD);
+	Z80State state;
+	Z80Word hires_dfile = 0;
 
-	Z80NMI(z80);
-	/* Debug("NMI\n"); */
-    }
+	Z80GetState(z80, &state);
 
-    if (hsync && !nmigen)
-    {
-    	if (last_R&0x40 && !(state.R&0x40))
+    	/* Check for hi-res modes
+	*/
+	if (state.I && state.I != last_I)
 	{
-	    Z80Interrupt(z80,0xff);
-	    ULA.y++;
-	    ULA.c=(ULA.c+1)%8;
-	    ULA.x=0;
-	    /* Debug("INTERRUPT\n"); */
-	}
-    }
+	    last_I = state.I;
 
-    last_R=state.R;
+	    if (state.I != 0x1e)
+	    {
+		hires_dfile = FindHiresDFILE();
+	    }
+	}
+
+	if (started && ((mem[CDFLAG] & 0x80) || waitkey || hires_dfile))
+	{
+	    fast_mode = FALSE;
+	    FRAME_TSTATES=SLOW_TSTATES;
+
+	    if (hires_dfile)
+	    {
+		DrawScreenHires(&state, hires_dfile);
+	    }
+	    else
+	    {
+		DrawScreenText(&state);
+	    }
+	}
+	else
+	{
+            fast_mode = TRUE;
+	    FRAME_TSTATES=FAST_TSTATES;
+	    DrawSnow();
+	}
+
+	/* Update FRAMES (if in SLOW) and scan the keyboard.  This only happens
+	   once we've got to a decent point in the boot cycle (detected with
+	   a valid stack pointer).
+	*/
+	if (state.SP < 0x8000)
+	{
+	    ZX81HouseKeeping(z80);
+	}
+
+	Z80ResetCycles(z80, val - current_frame_tstates);
+    }
 
     return TRUE;
 }
 
 
-static int CheckHalt(Z80 *z80, Z80Val val)
+static int EDCallback(Z80 *z80, Z80Val data)
 {
-    if (val)
+    Z80State state;
+    Z80Word pause;
+
+    Z80GetState(z80, &state);
+
+    switch((Z80Byte)data)
     {
-	if (!nmigen && !hsync)
-	    GUIMessage(eMessageBox,"POSSIBLE BUG",
-		       "Executed HALT while NMI generator\n"
-		       "and HSYNC generator off");
+    	case ED_SAVE:
+	    SaveTape(z80);
+	    break;
+
+    	case ED_LOAD:
+	    LoadTape(z80);
+	    break;
+
+	case ED_WAITKEY:
+	    waitkey = TRUE;
+	    started = TRUE;
+	    break;
+
+	case ED_ENDWAITKEY:
+	    waitkey = FALSE;
+	    break;
+
+	case ED_PAUSE:
+	    waitkey = TRUE;
+
+	    pause = state.BC;
+
+	    while(--pause && !(mem[CDFLAG] & 1))
+	    {
+		SDL_Event *e;
+
+		while((e = GFXGetKey()))
+		{
+		    ZX81KeyEvent(e);
+		}
+
+		CheckTimers(z80, FRAME_TSTATES);
+	    }
+
+	    waitkey = FALSE;
+	    break;
+
+	default:
+	    break;
     }
 
     return TRUE;
@@ -469,7 +761,6 @@ void ZX81Init(Z80 *z80)
     RomPatch();
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
-    Z80LodgeCallback(z80,eZ80_Halt,CheckHalt);
 
     /* Mirror the ROM
     */
@@ -494,11 +785,6 @@ void ZX81Init(Z80 *z80)
 
     white=GFXRGB(230,230,230);
     black=GFXRGB(0,0,0);
-
-    nmigen=FALSE;
-    hsync=FALSE;
-
-    GFXStartFrame();
 }
 
 
@@ -540,32 +826,7 @@ void ZX81KeyEvent(SDL_Event *e)
 
 Z80Byte ZX81ReadMem(Z80 *z80, Z80Word addr)
 {
-    /* Memory reads above 32K invoke the ULA
-    */
-    if (addr>0x7fff)
-    {
-	Z80Byte b;
-
-        b=mem[addr&0x7fff];
-
-        /* If bit 6 of the opcode is set the opcode is sent as is to the
-           Z80.  If it's not, the byte is interretted by the ULA.
-        */
-        if (b&0x40)
-	{
-            ULA_Video_Shifter(z80,0);
-	}
-        else
-	{
-            ULA_Video_Shifter(z80,b);
-            b=0;
-	}
-
-	return b;
-    }
-    else
-        return mem[addr&0x7fff];
-
+    return mem[addr&0x7fff];
 }
 
 
@@ -616,39 +877,6 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 		    b=matrix[7];
 		    break;
 	    }
-
-	    /* Turn on VSYNC if not on
-	    */
-	    if (!vsync)
-	    {
-		/* Debug("VSYNC\n"); */
-
-		GFXEndFrame(TRUE);
-		GFXClear(white);
-
-		ULA.x=0;
-		ULA.y=-1;
-		ULA.c=7;
-		ULA.release=FALSE;
-
-		GFXStartFrame();
-		vsync=TRUE;
-	    }
-	    else
-	    {
-	    	/* Reset and hold ULA counter
-		*/
-		ULA.c=0;
-		ULA.release=FALSE;
-	    }
-
-	    /* If NMI off, turn off the HSYNC generator
-	    */
-	    if (!nmigen)
-	    {
-		/* Debug("HSYNC OFF\n"); */
-	    	hsync=FALSE;
-	    }
 	    break;
 
 	default:
@@ -662,30 +890,6 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
     /* Debug("OUT %4.4x,%2.2X\n",port,val); */
-
-    /* Any port write releases the ULA line counter
-    */
-    ULA.release=TRUE;
-
-    switch(port&0xff)
-    {
-    	case 0xfd:	/* NMI generator OFF */
-	    /* Debug("NMIGEN OFF\n"); */
-	    nmigen=FALSE;
-	    break;
-
-	case 0xfe:	/* NMI generator ON */
-	    /* Debug("NMIGEN ON/VSYNC OFF\n"); */
-	    nmigen=TRUE;
-	    vsync=FALSE;
-	    Z80ResetCycles(z80,0);
-	    break;
-
-	case 0xff:	/* HSYNC generator ON */
-	    /* Debug("HSYNC ON\n"); */
-	    hsync=TRUE;
-	    break;
-    }
 }
 
 
@@ -698,11 +902,6 @@ Z80Byte ZX81ReadForDisassem(Z80 *z80, Z80Word addr)
 const char *ZX81Info(Z80 *z80)
 {
     static char buff[80];
-
-    sprintf(buff,"NMI: %s  HS: %s  ULA: (%d,%d,%d,%d)",
-		    nmigen ? "ON":"OFF",
-		    hsync ? "ON":"OFF",
-		    ULA.x,ULA.y,ULA.c,ULA.release);
 
     return buff;
 }
@@ -719,13 +918,9 @@ void ZX81Reset(Z80 *z80)
     int f;
 
     scr_enable=TRUE;
-    nmigen=FALSE;
-    hsync=FALSE;
 
     for(f=0;f<8;f++)
     	matrix[f]=0;
-
-    GFXStartFrame();
 }
 
 

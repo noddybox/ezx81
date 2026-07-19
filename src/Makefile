@@ -26,7 +26,7 @@
 # Simply comment out if not, and replace as needed.
 # Other CFLAGS lines *are* required.
 #
-CFLAGS	=	-O2
+CFLAGS	=	-g -O2
 
 TARGET	=	ezx81
 
@@ -58,7 +58,7 @@ OBJECTS	=	main.o		\
 		z80_decode.o	\
 		z80_dis.o
 
-CFLAGS +=	`sdl2-config --cflags`
+CFLAGS +=	`sdl2-config --cflags` -DENABLE_DISASSEM
 
 LIBS	=	`sdl2-config --libs`
 
