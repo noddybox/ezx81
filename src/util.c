@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "util.h"
 #include "exit.h"
@@ -131,5 +132,36 @@ void Debug(const char *format, ...)
     vfprintf(fp,format,ap);
     va_end(ap);
 }
+
+
+int StartsWith(const char *a, const char *b, size_t len)
+{
+    while(len && *a && *b &&
+    		tolower((unsigned char)*a) == tolower((unsigned char)*b))
+    {
+    	len--;
+	a++;
+	b++;
+    }
+
+    return len == 0;
+}
+
+
+int FileExists(const char *path)
+{
+    FILE *fp;
+
+    fp = fopen(path, "rb");
+
+    if (fp)
+    {
+    	fclose(fp);
+	return 1;
+    }
+
+    return 0;
+}
+
 
 /* END OF FILE */
