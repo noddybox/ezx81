@@ -21,8 +21,6 @@
     -------------------------------------------------------------------------
 
 */
-static const char id[]="$Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +33,7 @@ static const char id[]="$Id$";
 #include "gui.h"
 #include "memmenu.h"
 #include "config.h"
+#include "kbbmp.h"
 #include "exit.h"
 
 
@@ -155,7 +154,11 @@ int main(int argc, char *argv[])
 
 		case SDLK_F3:
 		    if (e->key.state==SDL_PRESSED)
-			GUIMessage(eMessageBox,"TODO","Sorry, not done yet");
+		    {
+			GFXBitmap(0, 0, GFX_WIDTH, GFX_HEIGHT, keyboard_bitmap);
+			GFXEndFrame(FALSE);
+			GFXWaitKey();
+		    }
 		    break;
 
 	    	case SDLK_ESCAPE:

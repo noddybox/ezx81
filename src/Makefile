@@ -1,4 +1,4 @@
-# kbs - Simple, easily fooled, POP3 spam filter
+# ezx81 - ZX81 emulator
 # 
 # Copyright (C) 2003  Ian Cowburn (ianc@noddybox.demon.co.uk)
 # 
@@ -17,8 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 # 
 # -------------------------------------------------------------------------
-# 
-# $Id: Makefile,v 1.12 2006-09-20 00:02:42 ianc Exp $
 # 
 
 
@@ -42,7 +40,8 @@ SOURCE	=	main.c		\
 		expr.c		\
 		z80.c		\
 		z80_decode.c	\
-		z80_dis.c
+		z80_dis.c	\
+		kbbmp.c
 
 OBJECTS	=	main.o		\
 		zx81.o		\
@@ -56,7 +55,8 @@ OBJECTS	=	main.o		\
 		expr.o		\
 		z80.o		\
 		z80_decode.o	\
-		z80_dis.o
+		z80_dis.o	\
+		kbbmp.o
 
 CFLAGS +=	`sdl2-config --cflags` -DENABLE_DISASSEM
 
@@ -66,23 +66,13 @@ LIBS	=	`sdl2-config --libs`
 $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
-depend:
-	makedepend $(SOURCE)
+depend.mak: $(SOURCE) *.h
+	$(CC) -MM $(SOURCE) > depend.mak || true
+
+kbbmp.c: ../gfx/keyb.gfxbmp
+	cfile8 ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-main.o: z80.h zx81.h gfx.h gui.h memmenu.h config.h exit.h
-zx81.o: zx81.h z80.h gfx.h gui.h config.h util.h exit.h
-config.o: exit.h config.h
-gfx.o: gfx.h exit.h config.h util.h font.h
-gui.o: gui.h gfx.h util.h exit.h
-memmenu.o: memmenu.h z80.h zx81.h gfx.h gui.h expr.h util.h
-util.o: util.h exit.h
-exit.o: exit.h
-font.o: font.h
-z80.o: z80.h z80_private.h
-z80_decode.o: z80.h z80_private.h
-z80_dis.o: z80.h z80_private.h
+include depend.mak
