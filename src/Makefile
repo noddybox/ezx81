@@ -72,6 +72,9 @@ depend.mak: $(SOURCE) *.h
 kbbmp.c: ../gfx/keyb.gfxbmp
 	cfile8 ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
 
+../gfx/keyb.gfxbmp: ../gfx/keyb.png
+	cd ../gfx ; $(MAKE)
+
 clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
 
