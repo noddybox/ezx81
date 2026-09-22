@@ -21,15 +21,3 @@
     -------------------------------------------------------------------------
 
 */
-#ifndef CFILE8_KBBMP_H
-#define CFILE8_KBBMP_H
-
-#include <stdint.h>
-
-/* Auto generated binary of ../gfx/keyb.gfxbmp
-*/
-extern const uint8_t keyboard_bitmap[];
-
-#define KEYBOARD_BITMAP_LEN 13934
-
-#endif

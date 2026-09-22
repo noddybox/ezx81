@@ -24,7 +24,7 @@
 # Simply comment out if not, and replace as needed.
 # Other CFLAGS lines *are* required.
 #
-CFLAGS	=	-g -O2
+CFLAGS	=	-g -O2 -Igfx-bitmap
 
 TARGET	=	ezx81
 
@@ -56,7 +56,8 @@ OBJECTS	=	main.o		\
 		z80.o		\
 		z80_decode.o	\
 		z80_dis.o	\
-		kbbmp.o
+		kbbmp.o		\
+		gfx-bitmap.o
 
 CFLAGS +=	`sdl2-config --cflags` -DENABLE_DISASSEM
 
@@ -70,10 +71,13 @@ depend.mak: $(SOURCE) *.h
 	$(CC) -MM $(SOURCE) > depend.mak || true
 
 kbbmp.c: ../gfx/keyb.gfxbmp
-	cfile8 ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
+	cfile8 -h template -c template ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
 
 ../gfx/keyb.gfxbmp: ../gfx/keyb.png
 	cd ../gfx ; $(MAKE)
+
+gfx-bitmap.o: gfx-bitmap/gfx-bitmap.c gfx-bitmap/gfx-bitmap.h
+	$(CC) -c -o gfx-bitmap.o gfx-bitmap/gfx-bitmap.c
 
 clean:
 	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak

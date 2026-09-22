@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "SDL.h"
+#include <SDL.h>
 
 #include "z80.h"
 #include "zx81.h"
@@ -35,6 +35,7 @@
 #include "config.h"
 #include "kbbmp.h"
 #include "exit.h"
+#include "gfx-bitmap.h"
 
 
 /* ---------------------------------------- MACROS
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
     SDL_Event *e;
     int quit;
     int trace;
+    GFX_Bitmap bitmap;
 
     ConfigRead();
 
@@ -79,6 +81,14 @@ int main(int argc, char *argv[])
 		ZX81ReadPort,
 		ZX81WritePort,
 		ZX81ReadForDisassem);
+
+    if (GFX_Bitmap_Decode(keyboard_bitmap,
+    			  KEYBOARD_BITMAP_LEN,
+			  &bitmap) != eGFX_Ok)
+    {
+	fprintf(stderr, "error: failed to decoded keyboard bitmap\n");
+	return EXIT_FAILURE;
+    }
 
     GFXInit();
 
@@ -155,7 +165,7 @@ int main(int argc, char *argv[])
 		case SDLK_F3:
 		    if (e->key.state==SDL_PRESSED)
 		    {
-			GFXBitmap(0, 0, GFX_WIDTH, GFX_HEIGHT, keyboard_bitmap);
+			GFXBitmap(&bitmap);
 			GFXEndFrame(FALSE);
 			GFXWaitKey();
 		    }

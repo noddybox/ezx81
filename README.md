@@ -3,6 +3,17 @@
 ezx81 is a basic emulation of the ZX81.  It was mainly done as a test bed for
 my Z80 emulation.
 
+## Building
+
+This should compile fine on any POSIX system with SDL version 2 available.
+
+There are dependencies on two of my tools for the build:
+
+- https://github.com/noddybox/cfile8
+- https://github.com/noddybox/png2gfx
+
+You will only need these if you touch the image files under the `gfx` directory.
+
 ## Usage
 
 To run it simply run the generated `ezx81` executable.  It reads configuration
