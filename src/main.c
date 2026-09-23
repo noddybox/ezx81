@@ -135,7 +135,8 @@ int main(int argc, char *argv[])
 				   "ESC - Quit                        \n"
 				   "F1  - Help                        \n"
 				   "F2  - About                       \n"
-				   "F3  - View ZX81 keyboad           \n"
+				   "F3  - View ZX81 keyboard          \n"
+				   "F5  - Reset ZX81                  \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		break;
@@ -169,6 +170,11 @@ int main(int argc, char *argv[])
 			GFXEndFrame(FALSE);
 			GFXWaitKey();
 		    }
+		    break;
+
+		case SDLK_F5:
+		    Z80Reset(z80);
+		    ZX81Reset(z80);
 		    break;
 
 	    	case SDLK_ESCAPE:

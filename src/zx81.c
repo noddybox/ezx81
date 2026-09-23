@@ -947,10 +947,12 @@ void ZX81Reset(Z80 *z80)
 {
     int f;
 
-    scr_enable=TRUE;
+    scr_enable = TRUE;
 
-    for(f=0;f<8;f++)
-    	matrix[f]=0xff;
+    for(f = 0; f < 8; f++)
+    {
+    	matrix[f] = 0xff;
+    }
 }
 
 

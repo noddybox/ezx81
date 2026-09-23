@@ -35,6 +35,8 @@ F2 - Display a message about the emulator.
 
 F3 - Display the ZX81 keyboard for reference.
 
+F5 - Reset the ZX81.
+
 F11 - Display the Memory Menu.
 
 F12 - Display an overlay of the current state of the Z80 CPU while the system
@@ -44,8 +46,11 @@ is running.
 
 The emulator only supports the use of .P files, which are simple binary dumps
 of memory.  It loads FILE.P from the snapshot directory defined in the config
-file if you issue the command `LOAD "FILE"`.  Saving will save to a file
-FILE.P if you oissue the command `SAVE "FILE"`.
+file if you issue the command `LOAD "FILE"`.  If you `LOAD ""` then a file
+selector is displayed to select the file to load.  Saving will save to a file
+FILE.P if you issue the command `SAVE "FILE"`.  Note that the ZX81 does not
+allow you to save an empty filename, so no file selector for save is
+available.
 
 ## Memory Menu
 
