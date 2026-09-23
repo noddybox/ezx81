@@ -127,6 +127,7 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     int f;
     char match[MAX_MATCH + 1] = {0};
     size_t input_len = 0;
+    int key_handled;
 
     if (no==0)
     	return LIST_CANCEL;
@@ -206,18 +207,24 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 
 	e=GFXWaitKey();
 
+	key_handled = FALSE;
+
 	switch(e->key.keysym.sym)
 	{
 	    case SDLK_RETURN:
+		key_handled = TRUE;
 		done=TRUE;
 		break;
 
 	    case SDLK_ESCAPE:
+		key_handled = TRUE;
 		cur=-1;
 	    	done=TRUE;
 	    	break;
 
 	    case SDLK_UP:
+		key_handled = TRUE;
+
 		if (cur>0)
 		{
 		    cur--;
@@ -228,6 +235,8 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 	    	break;
 
 	    case SDLK_DOWN:
+		key_handled = TRUE;
+
 		if (cur<no-1)
 		{
 		    cur++;
@@ -238,6 +247,8 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 		break;
 
 	    case SDLK_PAGEUP:
+		key_handled = TRUE;
+
 		if (cur>0)
 		{
 		    cur-=(max-1);
@@ -251,6 +262,8 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 	    	break;
 
 	    case SDLK_PAGEDOWN:
+		key_handled = TRUE;
+
 		if (cur<no-1)
 		{
 		    cur+=(max-1);
@@ -265,6 +278,8 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 
 	    case SDLK_BACKSPACE:
 	    case SDLK_DELETE:
+		key_handled = TRUE;
+
 		if (input)
 		{
 		    if (input_len)
@@ -309,7 +324,7 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 		    break;
 	    }
 	}
-	else
+	else if (!key_handled)
 	{
 	    char c = SYMToChar(e->key.keysym.sym);
 
