@@ -41,7 +41,8 @@ SOURCE	=	main.c		\
 		z80.c		\
 		z80_decode.c	\
 		z80_dis.c	\
-		kbbmp.c
+		kbbmp.c		\
+		symtochar.c
 
 OBJECTS	=	main.o		\
 		zx81.o		\
@@ -57,6 +58,7 @@ OBJECTS	=	main.o		\
 		z80_decode.o	\
 		z80_dis.o	\
 		kbbmp.o		\
+		symtochar.o	\
 		gfx-bitmap.o
 
 CFLAGS +=	`sdl2-config --cflags` -DENABLE_DISASSEM

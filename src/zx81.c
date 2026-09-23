@@ -271,6 +271,17 @@ static char ToASCII(Z80Byte b)
 }
 
 
+static void ClearKeys(void)
+{
+    int f;
+
+    for(f = 0; f < 8; f++)
+    {
+        matrix[f] = 0xff;
+    }
+}
+
+
 static const char *ConvertFilename(Z80Word addr)
 {
     static char buff[FILENAME_MAX];
@@ -312,14 +323,33 @@ static void LoadTape(Z80 *cpu)
 
     if (strlen(p)==0)
     {
-    	GUIMessage(eMessageBox,"ERROR","Can't load empty filename");
-	return;
-    }
+	static char selected_file[FILENAME_MAX];
 
-    strcpy(path,SConfig(CONF_TAPEDIR));
-    strcat(path,"/");
-    strcat(path,p);
-    strcat(path,".p");
+	/* Clear the keys as otherwise the ENTER up is consumed
+	   by the GUI and the Spectrum thinks the ENTER key is being
+	   held down.
+	*/
+	ClearKeys();
+
+	if (GUIFileSelect(".P FILE TO LOAD",TRUE,
+			  selected_file[0] ? Dirname(selected_file) :
+					     SConfig(CONF_TAPEDIR),
+			  selected_file))
+	{
+	    strcpy(path, selected_file);
+	}
+	else
+	{
+	    return;
+	}
+    }
+    else
+    {
+	strcpy(path,SConfig(CONF_TAPEDIR));
+	strcat(path,"/");
+	strcat(path,p);
+	strcat(path,".p");
+    }
 
     if (!(fp=fopen(path,"rb")))
     {
@@ -920,7 +950,7 @@ void ZX81Reset(Z80 *z80)
     scr_enable=TRUE;
 
     for(f=0;f<8;f++)
-    	matrix[f]=0;
+    	matrix[f]=0xff;
 }
 
 

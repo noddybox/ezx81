@@ -68,6 +68,31 @@ int		GUIListOption(const char *title,
 			      int no, char * const list[], int option[]);
 
 
+/* Select a file from the given directory.
+
+   If load is TRUE then a new name cannot be entered.
+
+   Returns TRUE for selected, FALSE for cancelled.
+
+   path holds the new file entered.  Note that start_dir can be a path to a
+   file - if chdir(start_dir) would not work, then it is tried with the
+   dirname(1) of start_dir.
+
+   Also start_dir and path can be the same pointer:
+
+	char file[FILENAME_MAX]="/home/foobar/dir/file.tap";
+
+	if (GUI_Fsel("Select tape",TRUE,file,file))
+	    ....
+
+   Will work fine.
+*/
+int		GUIFileSelect(const char *prompt,
+			      int load,
+			      const char *start_dir,
+			      char path[]);
+
+
 #endif
 
 
