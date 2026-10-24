@@ -70,7 +70,7 @@ $(TARGET): $(OBJECTS) $(Z80LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 depend.mak: $(SOURCE) *.h
-	$(CC) -MM $(SOURCE) > depend.mak || true
+	$(CC) $(CFLAGS) -MM $(SOURCE) > depend.mak
 
 kbbmp.c: ../gfx/keyb.gfxbmp
 	cfile8 -h template -c template ../gfx/keyb.gfxbmp kbbmp.c keyboard_bitmap
