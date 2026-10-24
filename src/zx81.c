@@ -792,18 +792,26 @@ void ZX81Init(Z80 *z80)
     Z80LodgeCallback(z80,eZ80_EDHook,EDCallback);
     Z80LodgeCallback(z80,eZ80_Instruction,CheckTimers);
 
-    /* Mirror the ROM
+    /* Mirror the ROM if no RAM at 0x2000
     */
-    memcpy(mem+ROMLEN,mem,ROMLEN);
-
-    RAMBOT=0x4000;
+    if (IConfig(CONF_RAM_AT_2000))
+    {
+    	RAMLEN = 0x2000;
+	RAMBOT = 0x2000;
+    }
+    else
+    {
+	memcpy(mem+ROMLEN,mem,ROMLEN);
+	RAMLEN = 0;
+	RAMBOT = 0x4000;
+    }
 
     /* Memory size (1 or 16K)
     */
     if (IConfig(CONF_MEMSIZE)==16)
-	RAMLEN=0x4000;
+	RAMLEN += 0x4000;
     else
-	RAMLEN=0x400;
+	RAMLEN += 0x400;
 
     RAMTOP=RAMBOT+RAMLEN;
 

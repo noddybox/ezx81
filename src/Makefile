@@ -82,6 +82,6 @@ gfx-bitmap.o: gfx-bitmap/gfx-bitmap.c gfx-bitmap/gfx-bitmap.h
 	$(CC) -c -o gfx-bitmap.o gfx-bitmap/gfx-bitmap.c
 
 clean:
-	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core Makefile.bak
+	rm -f $(TARGET) $(TARGET).exe $(OBJECTS) core
 
 include depend.mak
