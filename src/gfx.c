@@ -265,33 +265,6 @@ SDL_Event *GFXWaitKey(int *is_text)
 }
 
 
-SDL_Event *GFXGetText(void)
-{
-    static SDL_Event e;
-
-    while(SDL_PollEvent(&e))
-    {
-    	if (e.type == SDL_TEXTINPUT)
-	    return &e;
-    }
-
-    return NULL;
-}
-
-
-SDL_Event *GFXWaitText(void)
-{
-    static SDL_Event e;
-
-    do
-    {
-    	SDL_WaitEvent(&e);
-    } while (e.type != SDL_TEXTINPUT);
-
-    return &e;
-}
-
-
 void GFXPlot(int x, int y, Uint32 col)
 {
     putpixel(x,y,col);
