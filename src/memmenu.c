@@ -851,28 +851,6 @@ static void PlaybackTrace(Z80 *z80)
 		    pos--;
 		    break;
 
-		case SDLK_p:
-		    if (EnterAddress("PC to search for?",z80,&pc))
-		    {
-			while((rd=fread(&t,sizeof t,1,fp))==1)
-			{
-			    pos++;
-			    if (t.s.PC==pc)
-				break;
-			}
-
-			if (rd!=1)
-			{
-			    GUIMessage(eMessageBox,"NOTICE","Address not found");
-			    pos=prev_pos;
-			}
-		    }
-		    break;
-
-		case SDLK_m:
-		    showmem=!showmem;
-		    break;
-
 		case SDLK_UP:
 		    pos--;
 		    break;
@@ -895,6 +873,40 @@ static void PlaybackTrace(Z80 *z80)
 
 		case SDLK_RIGHT:
 		    pos+=1000;
+		    break;
+
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    switch(toupper(GFX_TEXT_ASCII(e)))
+	    {
+		case '\n':
+		    break;
+
+		case 'P':
+		    if (EnterAddress("PC to search for?",z80,&pc))
+		    {
+			while((rd=fread(&t,sizeof t,1,fp))==1)
+			{
+			    pos++;
+			    if (t.s.PC==pc)
+				break;
+			}
+
+			if (rd!=1)
+			{
+			    GUIMessage(eMessageBox,
+			    		"NOTICE","Address not found");
+			    pos=prev_pos;
+			}
+		    }
+		    break;
+
+		case 'M':
+		    showmem=!showmem;
 		    break;
 
 		default:
