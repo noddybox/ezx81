@@ -97,7 +97,6 @@ static int		lodged=FALSE;
 /* ---------------------------------------- PROTOS
 */
 static int		Instruction(Z80 *z80, Z80Val data);
-static int		Address(Z80 *z80, const char *p, Z80Word *addr);
 static int		Expand(void *client, const char *p, long *res);
 
 
@@ -134,21 +133,6 @@ static int GetLabel(const char *label, Z80Word *result)
     return FALSE;
 }
 
-
-static int Address(Z80 *z80, const char *p, Z80Word *addr)
-{
-    long e=0;
-
-    if (ExprEval(p,&e,Expand,z80))
-    {
-    	*addr=e;
-	return TRUE;
-    }
-    else
-    {
-    	return FALSE;
-    }
-}
 
 static int Expand(void *client, const char *p, long *res)
 {
