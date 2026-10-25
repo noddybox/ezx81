@@ -34,11 +34,12 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
+#include <SDL.h>
+
 #include "gui.h"
 #include "gfx.h"
 #include "util.h"
 #include "exit.h"
-#include "symtochar.h"
 
 
 /* ---------------------------------------- MACROS
@@ -127,7 +128,7 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     int f;
     char match[MAX_MATCH + 1] = {0};
     size_t input_len = 0;
-    int key_handled;
+    int is_text;
 
     if (no==0)
     	return LIST_CANCEL;
@@ -205,128 +206,119 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	key_handled = FALSE;
-
-	switch(e->key.keysym.sym)
-	{
-	    case SDLK_RETURN:
-		key_handled = TRUE;
-		done=TRUE;
-		break;
-
-	    case SDLK_ESCAPE:
-		key_handled = TRUE;
-		cur=-1;
-	    	done=TRUE;
-	    	break;
-
-	    case SDLK_UP:
-		key_handled = TRUE;
-
-		if (cur>0)
-		{
-		    cur--;
-
-		    if (cur<top)
-		    	top=cur;
-		}
-	    	break;
-
-	    case SDLK_DOWN:
-		key_handled = TRUE;
-
-		if (cur<no-1)
-		{
-		    cur++;
-
-		    if (cur>top+max-2)
-		    	top=cur-max+2;
-		}
-		break;
-
-	    case SDLK_PAGEUP:
-		key_handled = TRUE;
-
-		if (cur>0)
-		{
-		    cur-=(max-1);
-
-		    if (cur<0)
-		    	cur=0;
-
-		    if (cur<top)
-		    	top=cur;
-		}
-	    	break;
-
-	    case SDLK_PAGEDOWN:
-		key_handled = TRUE;
-
-		if (cur<no-1)
-		{
-		    cur+=(max-1);
-
-		    if (cur>=no)
-		    	cur=no-1;
-
-		    if (cur>top+max-2)
-		    	top=cur-max+2;
-		}
-		break;
-
-	    case SDLK_BACKSPACE:
-	    case SDLK_DELETE:
-		key_handled = TRUE;
-
-		if (input)
-		{
-		    if (input_len)
-		    {
-		    	input[--input_len] = 0;
-		    }
-		}
-		else
-		{
-		    match[0] = 0;
-		}
-		break;
-
-	    default:
-		break;
-	}
-
-	if (option)
+	if (!is_text)
 	{
 	    switch(e->key.keysym.sym)
 	    {
-		case SDLK_SPACE:
-		    option[cur]=!option[cur];
+		case SDLK_RETURN:
+		    done=TRUE;
 		    break;
 
-		case SDLK_i:
-		    for(f=0;f<no;f++)
-			option[f]=!option[f];
+		case SDLK_ESCAPE:
+		    cur=-1;
+		    done=TRUE;
 		    break;
 
-		case SDLK_s:
-		    for(f=0;f<no;f++)
-			option[f]=TRUE;
+		case SDLK_UP:
+		    if (cur>0)
+		    {
+			cur--;
+
+			if (cur<top)
+			    top=cur;
+		    }
 		    break;
 
-		case SDLK_c:
-		    for(f=0;f<no;f++)
-			option[f]=FALSE;
+		case SDLK_DOWN:
+		    if (cur<no-1)
+		    {
+			cur++;
+
+			if (cur>top+max-2)
+			    top=cur-max+2;
+		    }
+		    break;
+
+		case SDLK_PAGEUP:
+		    if (cur>0)
+		    {
+			cur-=(max-1);
+
+			if (cur<0)
+			    cur=0;
+
+			if (cur<top)
+			    top=cur;
+		    }
+		    break;
+
+		case SDLK_PAGEDOWN:
+		    if (cur<no-1)
+		    {
+			cur+=(max-1);
+
+			if (cur>=no)
+			    cur=no-1;
+
+			if (cur>top+max-2)
+			    top=cur-max+2;
+		    }
+		    break;
+
+		case SDLK_BACKSPACE:
+		case SDLK_DELETE:
+		    if (input)
+		    {
+			if (input_len)
+			{
+			    input[--input_len] = 0;
+			}
+		    }
+		    else
+		    {
+			match[0] = 0;
+		    }
 		    break;
 
 		default:
 		    break;
 	    }
+
+	    if (option)
+	    {
+		switch(e->key.keysym.sym)
+		{
+		    case SDLK_SPACE:
+			option[cur]=!option[cur];
+			break;
+
+		    case SDLK_i:
+			for(f=0;f<no;f++)
+			    option[f]=!option[f];
+			break;
+
+		    case SDLK_s:
+			for(f=0;f<no;f++)
+			    option[f]=TRUE;
+			break;
+
+		    case SDLK_c:
+			for(f=0;f<no;f++)
+			    option[f]=FALSE;
+			break;
+
+		    default:
+			break;
+		}
+	    }
 	}
-	else if (!key_handled)
+	else
 	{
-	    char c = SYMToChar(e->key.keysym.sym);
+	    /* We only deal with ASCII
+	    */
+	    char c = e->text.text[0] & 0x7f;
 
 	    if (input)
 	    {
@@ -379,133 +371,6 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     {
 	return cur;
     }
-}
-
-
-static int DoList_old(const char *title, int no, char * const list[], int *option)
-{
-    static const int max=GFX_HEIGHT/8-8;
-    SDL_Event *e;
-    int top;
-    int cur;
-    int done;
-    int f;
-
-    if (no==0)
-    	return -1;
-
-    top=0;
-    cur=0;
-
-    done=FALSE;
-
-    while(!done)
-    {
-	Box(title,7,7,GFX_WIDTH-14,GFX_HEIGHT-14);
-
-	if (option)
-	{
-	    Centre("Cursors to move, RETURN to accept",
-	    		GFX_HEIGHT-44,WHITE);
-	    Centre("SPACE toggles, I inverts all",
-	    		GFX_HEIGHT-36,WHITE);
-	    Centre("S select all, C clear all",
-	    		GFX_HEIGHT-28,WHITE);
-	}
-	else
-	    Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
-
-	Centre("ESCAPE to cancel",GFX_HEIGHT-20,WHITE);
-
-	for(f=0;f<max;f++)
-	{
-	    if (f+top<no)
-	    {
-		Uint32 pen,paper;
-
-		if (f+top==cur)
-		{
-		    pen=WHITE;
-		    paper=RED;
-		}
-		else
-		{
-		    pen=GREY;
-		    paper=BLACK;
-		}
-
-		if (option)
-		    GFXPrintPaper(16,20+f*8,pen,paper,"%c %-34.34s",
-				  option[f+top] ? FONT_TICK:' ',list[f+top]);
-		else
-		    GFXPrintPaper(16,20+f*8,pen,paper,"%-36.36s",list[f+top]);
-	    }
-	}
-
-	GFXEndFrame(FALSE);
-
-	e=GFXWaitKey();
-
-	switch(e->key.keysym.sym)
-	{
-	    case SDLK_RETURN:
-	    	done=TRUE;
-		break;
-
-	    case SDLK_SPACE:
-	    	if (option)
-		    option[cur]=!option[cur];
-		break;
-
-	    case SDLK_i:
-	    	if (option)
-		    for(f=0;f<no;f++)
-			option[f]=!option[f];
-		break;
-
-	    case SDLK_s:
-	    	if (option)
-		    for(f=0;f<no;f++)
-			option[f]=TRUE;
-		break;
-
-	    case SDLK_c:
-	    	if (option)
-		    for(f=0;f<no;f++)
-			option[f]=FALSE;
-		break;
-
-	    case SDLK_ESCAPE:
-		cur=-1;
-	    	done=TRUE;
-	    	break;
-
-	    case SDLK_UP:
-		if (cur>0)
-		{
-		    cur--;
-
-		    if (cur<top)
-		    	top=cur;
-		}
-	    	break;
-
-	    case SDLK_DOWN:
-		if (cur<no-1)
-		{
-		    cur++;
-
-		    if (cur>top+max-2)
-		    	top=cur-max+2;
-		}
-		break;
-
-	    default:
-		break;
-	}
-    }
-
-    return cur;
 }
 
 
@@ -605,22 +470,27 @@ int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
 
 	while(TRUE)
 	{
-	    e=GFXWaitKey();
+	    int is_text;
 
-	    if (e->key.keysym.sym==SDLK_y)
+	    e=GFXWaitKey(&is_text);
+
+	    if (!is_text)
 	    {
-	    	ret=TRUE;
-		break;
-	    }
-	    else if (e->key.keysym.sym==SDLK_n)
-	    {
-	    	ret=FALSE;
-		break;
+		if (e->key.keysym.sym==SDLK_y)
+		{
+		    ret=TRUE;
+		    break;
+		}
+		else if (e->key.keysym.sym==SDLK_n)
+		{
+		    ret=FALSE;
+		    break;
+		}
 	    }
 	}
     }
     else
-	GFXWaitKey();
+	GFXWaitKey(NULL);
 
 
     free(line);
@@ -644,40 +514,48 @@ const char *GUIInputString(const char *prompt, const char *orig)
 
     while(!done)
     {
+	int is_text;
+
     	GFXRect(0,y_pos,GFX_WIDTH,8,BLACK,TRUE);
 	GFXPrint(0,y_pos,WHITE,"%s %s%c",prompt,buff,FONT_CURSOR);
 	GFXEndFrame(FALSE);
 
-	e=GFXWaitKey();
+	e=GFXWaitKey(&is_text);
 
-	switch(e->key.keysym.sym)
+	if (!is_text)
 	{
-	    case SDLK_RETURN:
-	    case SDLK_KP_ENTER:
-	    	done=TRUE;
-		break;
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_RETURN:
+		case SDLK_KP_ENTER:
+		    done=TRUE;
+		    break;
 
-	    case SDLK_ESCAPE:
-		buff[0]=0;
-		len=0;
-	    	break;
+		case SDLK_ESCAPE:
+		    buff[0]=0;
+		    len=0;
+		    break;
 
-	    case SDLK_BACKSPACE:
-	    case SDLK_DELETE:
-	    	if (len)
-		    buff[--len]=0;
+		case SDLK_BACKSPACE:
+		case SDLK_DELETE:
+		    if (len)
+			buff[--len]=0;
 
-		break;
+		    break;
 
-	    default:
-		c=(unsigned char)e->key.keysym.sym;
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    c=e->text.text[0];
 
-	    	if (len<40 && isprint(c))
-		{
-		    buff[len++]=c;
-		    buff[len]=0;
-		}
-		break;
+	    if (len<40 && isprint(c))
+	    {
+		buff[len++]=c;
+		buff[len]=0;
+	    }
 	}
     }
 

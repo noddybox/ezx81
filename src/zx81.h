@@ -47,6 +47,8 @@ Z80Byte	ZX81ReadPort(Z80 *z80, Z80Word port);
 void	ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val);
 Z80Byte	ZX81ReadForDisassem(Z80 *z80, Z80Word addr);
 
+const Z80Label	*ZX81GetLabels(void);
+
 /* Interfaces for memory menu
 */
 const char	*ZX81Info(Z80 *z80);

@@ -82,6 +82,8 @@ int main(int argc, char *argv[])
 		ZX81WritePort,
 		ZX81ReadForDisassem);
 
+    Z80SetLabels(z80, ZX81GetLabels());
+
     if (GFX_Bitmap_Decode(keyboard_bitmap,
     			  KEYBOARD_BITMAP_LEN,
 			  &bitmap) != eGFX_Ok)
@@ -168,7 +170,7 @@ int main(int argc, char *argv[])
 		    {
 			GFXBitmap(&bitmap);
 			GFXEndFrame(FALSE);
-			GFXWaitKey();
+			GFXWaitKey(NULL);
 		    }
 		    break;
 

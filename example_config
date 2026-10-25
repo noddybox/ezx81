@@ -21,3 +21,6 @@ scale           1
 
 # Trace the state of the Z80 to stdout if 1.  Defaults to 0.
 trace           0
+
+# Whether to assume the 8K at 0x2000 is RAM rather than a ROM mirror
+ram_at_2000	1

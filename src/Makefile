@@ -24,7 +24,7 @@
 # Simply comment out if not, and replace as needed.
 # Other CFLAGS lines *are* required.
 #
-CFLAGS	=	-g -O2 -Igfx-bitmap
+CFLAGS	=	-g -Igfx-bitmap
 
 TARGET	=	ezx81
 
@@ -41,8 +41,7 @@ SOURCE	=	main.c		\
 		z80.c		\
 		z80_decode.c	\
 		z80_dis.c	\
-		kbbmp.c		\
-		symtochar.c
+		kbbmp.c
 
 OBJECTS	=	main.o		\
 		zx81.o		\
@@ -58,7 +57,6 @@ OBJECTS	=	main.o		\
 		z80_decode.o	\
 		z80_dis.o	\
 		kbbmp.o		\
-		symtochar.o	\
 		gfx-bitmap.o
 
 CFLAGS +=	`sdl2-config --cflags` -DENABLE_DISASSEM

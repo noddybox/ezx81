@@ -45,9 +45,9 @@
 
 /* ---------------------------------------- STATICS
 */
-static const int	ROMLEN=0x2000;
-static const int	ROM_SAVE=0x2fc;
-static const int	ROM_LOAD=0x347;
+#define ROMLEN		0x2000
+#define ROM_SAVE	0x2fc
+#define ROM_LOAD	0x347
 
 #define ED_SAVE		0xf0
 #define ED_LOAD		0xf1
@@ -605,11 +605,12 @@ static void DrawScreenHires(Z80State *state, Z80Word hires_dfile)
     GFXClear(white);
 
     table = state->I << 8;
-    scr = mem + hires_dfile;
+    scr = mem + PEEKW(DFILE);
+    // scr = mem + hires_dfile;
 
     for(y = 0; y < SCR_H; y++)
     {
-	for(x = 0; y < SCR_W; x++)
+	for(x = 0; x < SCR_W; x++)
 	{
 	    int c = *scr++;
 	    int v = mem[table + (c & 0x3f) * 8];
@@ -934,6 +935,55 @@ void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 Z80Byte ZX81ReadForDisassem(Z80 *z80, Z80Word addr)
 {
     return mem[addr&0x7fff];
+}
+
+
+const Z80Label *ZX81GetLabels(void)
+{
+    static const Z80Label label[]=
+    	{
+	    {ROM_SAVE,	"SAVE"},
+	    {ROM_LOAD,	"LOAD"},
+	    {16384,	"ERR_NR"},
+	    {16385,	"FLAGS"},
+	    {16386,	"ERR_SP"},
+	    {16388,	"RAMTOP"},
+	    {16390,	"MODE"},
+	    {16391,	"PPC"},
+	    {16393,	"VERSN"},
+	    {16394,	"E_PPC"},
+	    {16396,	"D_FILE"},
+	    {16398,	"DF_CC"},
+	    {16400,	"VARS"},
+	    {16402,	"DEST"},
+	    {16404,	"E_LINE"},
+	    {16406,	"CH_ADD"},
+	    {16408,	"X_PTR"},
+	    {16410,	"STKBOT"},
+	    {16412,	"STKEND"},
+	    {16414,	"BERG"},
+	    {16415,	"MEM"},
+	    {16418,	"DF_SZ"},
+	    {16419,	"S_TOP"},
+	    {16421,	"LAST_K"},
+	    {16424,	"MARGIN"},
+	    {16425,	"NXTLIN"},
+	    {16427,	"OLDPPC"},
+	    {16429,	"FLAGX"},
+	    {16430,	"STRLEN"},
+	    {16432,	"T_ADDR"},
+	    {16434,	"SEED"},
+	    {16436,	"FRAMES"},
+	    {16438,	"COORDS"},
+	    {16440,	"PR_CC"},
+	    {16441,	"S_POSN"},
+	    {16443,	"CDFLAG"},
+	    {16444,	"PRBUFF"},
+	    {16477,	"MEMBOT"},
+	    {0,		NULL}
+	};
+
+    return label;
 }
 
 

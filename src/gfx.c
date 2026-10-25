@@ -233,14 +233,60 @@ SDL_Event *GFXGetKey(void)
 }
 
 
-SDL_Event *GFXWaitKey(void)
+SDL_Event *GFXGetTextKey(void)
+{
+    static SDL_Event e;
+
+    while(SDL_PollEvent(&e))
+    {
+	if (e.type == SDL_TEXTINPUT)
+	    return &e;
+    }
+
+    return NULL;
+}
+
+
+SDL_Event *GFXWaitKey(int *is_text)
 {
     static SDL_Event e;
 
     do
     {
     	SDL_WaitEvent(&e);
-    } while (e.type!=SDL_KEYDOWN);
+    } while (e.type != SDL_KEYDOWN && e.type != SDL_TEXTINPUT);
+
+    if (is_text)
+    {
+    	*is_text = (e.type == SDL_TEXTINPUT);
+    }
+
+    return &e;
+}
+
+
+SDL_Event *GFXGetText(void)
+{
+    static SDL_Event e;
+
+    while(SDL_PollEvent(&e))
+    {
+    	if (e.type == SDL_TEXTINPUT)
+	    return &e;
+    }
+
+    return NULL;
+}
+
+
+SDL_Event *GFXWaitText(void)
+{
+    static SDL_Event e;
+
+    do
+    {
+    	SDL_WaitEvent(&e);
+    } while (e.type != SDL_TEXTINPUT);
 
     return &e;
 }

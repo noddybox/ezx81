@@ -63,6 +63,10 @@ register names and can use different bases.  For instance `pc` will enter the
 address as the current contents of the Program Counter.  By default numbers
 are decimal.  To use hex number prefix the value with `0x`.
 
+If the value is prefixed with '!' then the byte at the specified address is
+read and used.  If the value is prefixed with '@' then the word at the
+specified address is read and used.
+
 ### Main Menu
 
 The main memory menu offers these options:

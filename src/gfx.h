@@ -47,6 +47,13 @@
 #define GFX_WIDTH		320
 #define GFX_HEIGHT		200
 
+/* ---------------------------------------- MACROS
+*/
+
+/* Get the ASCII code for a text event.  Text is in UTF-8, but we only deal
+   with ASCII
+*/
+#define GFX_TEXT_ASCII(ev)	((ev)->text.text[0] & 0x7f)
 
 /* ---------------------------------------- INTERFACES
 */
@@ -83,14 +90,27 @@ void		GFXEndFrame(int delay);
 void		GFXKeyRepeat(int repeat);
 
 
-/* Suck out keyboard events.  Returns NULL if no more keyboard events
+/* Get next keyboard up/down event.  Returns NULL if no more keyboard events
 */
 SDL_Event	*GFXGetKey(void);
 
 
-/* Wait for a keypress.  Note that key up events are returned.
+/* Get next keyboard text events.  Returns NULL if no more keyboard events
 */
-SDL_Event	*GFXWaitKey(void);
+SDL_Event	*GFXGetTextKey(void);
+
+
+/* Wait for a keypress.  Note that key up events and text input events 
+   can be returned.  Determine the type with the updated is_text parameter.
+   A valid event will always be returned.  The type parameter can be NULL if
+   you're not interested in the type of event returned, for example if you're
+   calling GFXWaitKey(NULL) just to wait for any key to be pressed.
+
+   Note that due to the ordering of events, if a printable key is handled as
+   a keycode, you will get a duplicate text event for it as well, so handle
+   printable keys as text.
+*/
+SDL_Event	*GFXWaitKey(int *is_text);
 
 
 /*
