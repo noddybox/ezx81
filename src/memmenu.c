@@ -214,7 +214,7 @@ static int Expand(void *client, const char *p, long *res)
 
 	if (ExprEval(p + 1, &n, Expand, client))
 	{
-	    *res=(Z80Word)ZX81ReadForDisassem(cpu, n);
+	    *res = ZX81ReadForDisassem(cpu, n);
 	}
 	else
 	{
@@ -227,8 +227,8 @@ static int Expand(void *client, const char *p, long *res)
 
 	if (ExprEval(p + 1, &n, Expand, client))
 	{
-	    *res=(Z80Word)ZX81ReadForDisassem(cpu, n)|
-		 (Z80Word)ZX81ReadForDisassem(cpu, n+1)<<8;
+	    *res = (Z80Word)ZX81ReadForDisassem(cpu, n)|
+		   (Z80Word)ZX81ReadForDisassem(cpu, n+1)<<8;
 	}
 	else
 	{
