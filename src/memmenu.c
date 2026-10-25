@@ -518,10 +518,6 @@ static void DoDisassem(Z80 *z80)
 		    quit=TRUE;
 		    break;
 
-		case SDLK_h:
-		    hexmode=!hexmode;
-		    break;
-
 		case SDLK_RETURN:
 		case SDLK_KP_ENTER:
 		    EnterAddress(NULL,z80,&pc);
@@ -555,6 +551,18 @@ static void DoDisassem(Z80 *z80)
 
 		case SDLK_RIGHT:
 		    pc+=1024;
+		    break;
+
+		default:
+		    break;
+	    }
+	}
+	else
+	{
+	    switch(toupper(GFX_TEXT_ASCII(e)))
+	    {
+		case 'H':
+		    hexmode=!hexmode;
 		    break;
 
 		default:
@@ -1151,7 +1159,7 @@ static void DoMonitor(Z80 *z80)
 
 	if (textevent)
 	{
-	    switch(toupper((unsigned char)GFX_TEXT_ASCII(keyevent)))
+	    switch(toupper(GFX_TEXT_ASCII(keyevent)))
 	    {
 		case '\n':
 		    break;

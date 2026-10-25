@@ -51,9 +51,10 @@
 */
 
 /* Get the ASCII code for a text event.  Text is in UTF-8, but we only deal
-   with ASCII
+   with ASCII.  The return is cast to unsigned char so it is safe for
+   ctype functions.
 */
-#define GFX_TEXT_ASCII(ev)	((ev)->text.text[0] & 0x7f)
+#define GFX_TEXT_ASCII(ev)	((unsigned char)((ev)->text.text[0] & 0x7f))
 
 /* ---------------------------------------- INTERFACES
 */
