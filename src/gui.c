@@ -285,26 +285,30 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 		default:
 		    break;
 	    }
+	}
+	else
+	{
+	    char c = GFX_TEXT_ASCII(e);
 
 	    if (option)
 	    {
-		switch(e->key.keysym.sym)
+		switch(toupper((unsigned char)c))
 		{
-		    case SDLK_SPACE:
+		    case ' ':
 			option[cur]=!option[cur];
 			break;
 
-		    case SDLK_i:
+		    case 'I':
 			for(f=0;f<no;f++)
 			    option[f]=!option[f];
 			break;
 
-		    case SDLK_s:
+		    case 'S':
 			for(f=0;f<no;f++)
 			    option[f]=TRUE;
 			break;
 
-		    case SDLK_c:
+		    case 'C':
 			for(f=0;f<no;f++)
 			    option[f]=FALSE;
 			break;
@@ -313,48 +317,44 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 			break;
 		}
 	    }
-	}
-	else
-	{
-	    /* We only deal with ASCII
-	    */
-	    char c = e->text.text[0] & 0x7f;
-
-	    if (input)
-	    {
-	    	if (input_len < 25)
-		{
-		    input[input_len++] = c;
-		    input[input_len] = 0;
-		}
-	    }
 	    else
 	    {
-		size_t l = strlen(match);
-
-		if (c && l < MAX_MATCH)
+		if (input)
 		{
-		    int found = FALSE;
-
-		    match[l++] = c;
-		    match[l] = 0;
-
-		    for(f = 0; f < no && !found; f++)
+		    if (input_len < 25)
 		    {
-			if (StartsWith(list[f], match, l))
+			input[input_len++] = c;
+			input[input_len] = 0;
+		    }
+		}
+		else
+		{
+		    size_t l = strlen(match);
+
+		    if (c && l < MAX_MATCH)
+		    {
+			int found = FALSE;
+
+			match[l++] = c;
+			match[l] = 0;
+
+			for(f = 0; f < no && !found; f++)
 			{
-			    found = TRUE;
-
-			    cur = f;
-			    
-			    if (cur < top)
+			    if (StartsWith(list[f], match, l))
 			    {
-				top = cur;
-			    }
+				found = TRUE;
 
-			    if (cur > top + max - 2)
-			    {
-				top = cur - max + 2;
+				cur = f;
+				
+				if (cur < top)
+				{
+				    top = cur;
+				}
+
+				if (cur > top + max - 2)
+				{
+				    top = cur - max + 2;
+				}
 			    }
 			}
 		    }
@@ -492,7 +492,6 @@ int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
     else
 	GFXWaitKey(NULL);
 
-
     free(line);
 
     return ret;
@@ -549,7 +548,7 @@ const char *GUIInputString(const char *prompt, const char *orig)
 	}
 	else
 	{
-	    c=e->text.text[0];
+	    c = GFX_TEXT_ASCII(e);
 
 	    if (len<40 && isprint(c))
 	    {
