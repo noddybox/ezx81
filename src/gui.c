@@ -118,7 +118,7 @@ static void Box(const char *title, int x, int y, int width, int height)
 
 
 static int DoList(const char *title, int no, char * const list[], int *option,
-                  char *input)
+                  char *input, int display_only)
 {
     static const int max=GFX_HEIGHT/8-8;
     SDL_Event *e;
@@ -147,25 +147,29 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     {
 	Box(title,7,7,GFX_WIDTH-14,GFX_HEIGHT-14);
 
-	if (option)
+	if (!display_only)
 	{
-	    Centre("Cursors to move, RETURN to accept",
-	    		GFX_HEIGHT-44,WHITE);
-	    Centre("SPACE toggles, I inverts all",
-	    		GFX_HEIGHT-36,WHITE);
-	    Centre("S select all, C clear all",
-	    		GFX_HEIGHT-28,WHITE);
-	}
-	else
-	{
-	    if (input)
+	    if (option)
 	    {
-		Centre("Enter new name and press RETURN",GFX_HEIGHT-36,WHITE);
-		Centre("Or select with cursors",GFX_HEIGHT-28,WHITE);
+		Centre("Cursors to move, RETURN to accept",
+			    GFX_HEIGHT-44,WHITE);
+		Centre("SPACE toggles, I inverts all",
+			    GFX_HEIGHT-36,WHITE);
+		Centre("S select all, C clear all",
+			    GFX_HEIGHT-28,WHITE);
 	    }
 	    else
 	    {
-		Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
+		if (input)
+		{
+		    Centre("Enter new name and press RETURN",
+		    					GFX_HEIGHT-36,WHITE);
+		    Centre("Or select with cursors",GFX_HEIGHT-28,WHITE);
+		}
+		else
+		{
+		    Centre("Cursors and RETURN to select",GFX_HEIGHT-28,WHITE);
+		}
 	    }
 	}
 
@@ -213,7 +217,10 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 	    switch(e->key.keysym.sym)
 	    {
 		case SDLK_RETURN:
-		    done=TRUE;
+		    if (!display_only)
+		    {
+			done=TRUE;
+		    }
 		    break;
 
 		case SDLK_ESCAPE:
@@ -564,7 +571,7 @@ const char *GUIInputString(const char *prompt, const char *orig)
 
 int GUIListSelect(const char *title, int no, char * const list[])
 {
-    return DoList(title,no,list,NULL, NULL);
+    return DoList(title, no,list, NULL, NULL, FALSE);
 }
 
 
@@ -582,7 +589,7 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
     for(f=0;f<no;f++)
     	o[f]=option[f];
 
-    sel=DoList(title,no,list,o,NULL);
+    sel=DoList(title, no, list, o, NULL, FALSE);
 
     if (sel!=-1)
     	for(f=0;f<no;f++)
@@ -591,6 +598,12 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
     free(o);
 
     return sel!=-1;
+}
+
+
+void GUIDisplayList(const char *title, int no, char * const list[])
+{
+    DoList(title, no, list, NULL, NULL, TRUE);
 }
 
 
@@ -669,7 +682,7 @@ int GUIFileSelect(const char *prompt, int load,
 		sprintf(list[f],"%-20.20s %9u",fe[f].name,fe[f].size);
 	}
 
-	sel=DoList(pwd,no,list,NULL, load ? NULL:input);
+	sel=DoList(pwd, no, list, NULL, load ? NULL:input, FALSE);
 
 	if (sel == -1)
 	{

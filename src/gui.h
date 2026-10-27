@@ -65,6 +65,11 @@ int		GUIListOption(const char *title,
 			      int no, char * const list[], int option[]);
 
 
+/* Displays a list.
+*/
+void		GUIDisplayList(const char *title, int no, char * const list[]);
+
+
 /* Select a file from the given directory.
 
    If load is TRUE then a new name cannot be entered.

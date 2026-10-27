@@ -310,6 +310,7 @@ static void DisplayMenu(void)
 	"7   - Remove a breakpoint   ",
 	"8   - Clear all breakpoints ",
 	"9   - Monitor               ",
+	"L   - Display defined labels",
 	"R   - Reset                 ",
 	"S   - Show current CPU state",
 	"X   - Exit (without confirm)",
@@ -1223,6 +1224,50 @@ static void DoMonitor(Z80 *z80)
 }
 
 
+static int SortNames(const void *a, const void *b)
+{
+    const char *sa;
+    const char *sb;
+
+    sa = *(const char **)a;
+    sb = *(const char **)b;
+
+    return strcmp(sa, sb);
+}
+
+
+static void DoDisplayLabels(void)
+{
+    const Z80Label *labels = ZX81GetLabels();
+    int no = 0;
+    char **list;
+
+    for(no = 0; labels[no].label; no++);
+
+    list = Malloc(sizeof *list * no);
+
+    for(int f = 0; f < no; f++)
+    {
+    	list[f] = Malloc(80);
+
+	sprintf(list[f], "%-30.30s %4.4x",
+				labels[f].label,
+				(unsigned int)labels[f].address);
+    }
+
+    qsort(list, no, sizeof *list, SortNames);
+
+    GUIDisplayList("LABELS", no, list);
+
+    for(int f = 0; f < no; f++)
+    {
+	free(list[f]);
+    }
+
+    free(list);
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 int MemoryMenu(Z80 *z80)
@@ -1319,6 +1364,10 @@ int MemoryMenu(Z80 *z80)
 		    GFXPrint(0,y,GREEN,"%s",ZX81Info(z80));
 		    GFXEndFrame(FALSE);
 		    GFXWaitKey(NULL);
+		    break;
+
+		case 'L':
+		    DoDisplayLabels();
 		    break;
 
 		default:
