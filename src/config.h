@@ -37,7 +37,8 @@ typedef enum
     CONF_FRAMES_PER_SEC,
     CONF_SCALE,
     CONF_TRACE,
-    CONF_RAM_AT_2000
+    CONF_RAM_AT_2000,
+    CONF_JOYSTICK
 } IConfigVar;
 
 

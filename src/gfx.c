@@ -31,6 +31,7 @@
 #include "gfx.h"
 #include "exit.h"
 #include "config.h"
+#include "joystick.h"
 #include "util.h"
 
 #include "font.h"
@@ -115,10 +116,27 @@ static void DoVLine(int x, int y1, int y2, Uint32 col)
 }
 
 
+static void CheckJoystick(SDL_Event *e)
+{
+    switch (e->type)
+    {
+	case SDL_JOYAXISMOTION:
+	case SDL_JOYBUTTONDOWN:
+	case SDL_JOYBUTTONUP:
+	    JOYPump(e);
+	    break;
+
+	default:
+	    break;
+    }
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void GFXInit(void)
 {
+    Uint32 flags;
     int f;
 
     if (IConfig(CONF_FULLSCREEN))
@@ -136,10 +154,17 @@ void GFXInit(void)
 
     frame=1000/IConfig(CONF_FRAMES_PER_SEC);
 
-    if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO))
+    flags = SDL_INIT_TIMER|SDL_INIT_VIDEO;
+
+    if (IConfig(CONF_JOYSTICK))
+    {
+	flags |= SDL_INIT_JOYSTICK;
+    }
+
+    if (SDL_Init(flags))
 	Exit("Failed to init SDL: %s\n",SDL_GetError());
 
-    if (!(window=SDL_CreateWindow("eSPEC",
+    if (!(window=SDL_CreateWindow("eZX81",
                                   SDL_WINDOWPOS_UNDEFINED,
                                   SDL_WINDOWPOS_UNDEFINED,
                                   GFX_WIDTH*scale,
@@ -225,6 +250,8 @@ SDL_Event *GFXGetKey(void)
 
     while(SDL_PollEvent(&e))
     {
+	CheckJoystick(&e);
+
     	if (e.type==SDL_KEYUP || e.type==SDL_KEYDOWN)
 	    return &e;
     }
@@ -239,6 +266,8 @@ SDL_Event *GFXGetTextKey(void)
 
     while(SDL_PollEvent(&e))
     {
+	CheckJoystick(&e);
+
 	if (e.type == SDL_TEXTINPUT)
 	    return &e;
     }
@@ -254,6 +283,7 @@ SDL_Event *GFXWaitKey(int *is_text)
     do
     {
     	SDL_WaitEvent(&e);
+	CheckJoystick(&e);
     } while (e.type != SDL_KEYDOWN && e.type != SDL_TEXTINPUT);
 
     if (is_text)

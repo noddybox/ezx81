@@ -24,3 +24,6 @@ trace           0
 
 # Whether to assume the 8K at 0x2000 is RAM rather than a ROM mirror
 ram_at_2000	1
+
+# Enable joystick support?  Defaults to 1.
+joystick	1

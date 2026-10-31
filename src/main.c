@@ -33,9 +33,9 @@
 #include "gui.h"
 #include "memmenu.h"
 #include "config.h"
-#include "kbbmp.h"
+#include "joystick.h"
 #include "exit.h"
-#include "gfx-bitmap.h"
+#include "bitmaps.h"
 
 
 /* ---------------------------------------- MACROS
@@ -70,7 +70,6 @@ int main(int argc, char *argv[])
     SDL_Event *e;
     int quit;
     int trace;
-    GFX_Bitmap bitmap;
 
     ConfigRead();
 
@@ -84,15 +83,14 @@ int main(int argc, char *argv[])
 
     Z80SetLabels(z80, ZX81GetLabels());
 
-    if (GFX_Bitmap_Decode(keyboard_bitmap,
-    			  KEYBOARD_BITMAP_LEN,
-			  &bitmap) != eGFX_Ok)
-    {
-	fprintf(stderr, "error: failed to decoded keyboard bitmap\n");
-	return EXIT_FAILURE;
-    }
+    BMPInit();
 
     GFXInit();
+
+    if (IConfig(CONF_JOYSTICK))
+    {
+    	JOYInit();
+    }
 
     ZX81Init(z80);
 
@@ -139,6 +137,10 @@ int main(int argc, char *argv[])
 				   "F2  - About                       \n"
 				   "F3  - View ZX81 keyboard          \n"
 				   "F5  - Reset ZX81                  \n"
+				   "F6  - Select Joytick              \n"
+				   "F7  - Select Joytick Keys         \n"
+				   "F8  - Save Joytick Mapping        \n"
+				   "F9  - Load Joytick Mapping        \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		break;
@@ -168,7 +170,7 @@ int main(int argc, char *argv[])
 		case SDLK_F3:
 		    if (e->key.state==SDL_PRESSED)
 		    {
-			GFXBitmap(&bitmap);
+			GFXBitmap(BMPGet(BMP_Keyboard));
 			GFXEndFrame(FALSE);
 			GFXWaitKey(NULL);
 		    }
@@ -177,6 +179,22 @@ int main(int argc, char *argv[])
 		case SDLK_F5:
 		    Z80Reset(z80);
 		    ZX81Reset(z80);
+		    break;
+
+		case SDLK_F6:
+		    JOYSelect();
+		    break;
+
+		case SDLK_F7:
+		    ZX81SetupJoystick();
+		    break;
+
+		case SDLK_F8:
+		    ZX81SaveJoystick();
+		    break;
+
+		case SDLK_F9:
+		    ZX81LoadJoystick();
 		    break;
 
 	    	case SDLK_ESCAPE:

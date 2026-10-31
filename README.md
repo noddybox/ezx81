@@ -37,6 +37,14 @@ F3 - Display the ZX81 keyboard for reference.
 
 F5 - Reset the ZX81.
 
+F6 - Select Joystick.
+
+F7 - Define joystick to keyboard mappings.
+
+F8 - Save joystick to key mappings.
+
+F9 - Load joystick to key mappings.
+
 F11 - Display the Memory Menu.
 
 F12 - Display an overlay of the current state of the Z80 CPU while the system
@@ -51,6 +59,24 @@ selector is displayed to select the file to load.  Saving will save to a file
 FILE.P if you issue the command `SAVE "FILE"`.  Note that the ZX81 does not
 allow you to save an empty filename, so no file selector for save is
 available.
+
+## Joysticks
+
+The emulator supports joysticks if they are supported by SDL.  As there is no
+common joystick adapter the joystick works by mapping directions and buttons
+to keys.  The joystick support is geared towards digital joypads where the
+main axis is controlled by a digital D-pad.
+
+By default the mapped keys are the cursor keys (`5`, `6`, `7` and `8`) and the
+buttons mapped to the `0` key for fire.
+
+By selecting F7 you can define which joypad button or direction maps to which
+key.  Follow the on-screen prompts.
+
+The defined mapping can be saved and loaded with F8 and F9 respectively.
+
+When loading a .P file the emulator will look for the same filename with the
+.P replaced with .joy81 and load those mapping automatically.
 
 ## Memory Menu
 

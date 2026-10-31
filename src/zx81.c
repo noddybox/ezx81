@@ -30,6 +30,8 @@
 #include "gfx.h"
 #include "gui.h"
 #include "config.h"
+#include "joystick.h"
+#include "bitmaps.h"
 #include "util.h"
 #include "exit.h"
 
@@ -99,6 +101,29 @@ static Z80Word		RAMLEN=0;
 */
 static Uint32		white;
 static Uint32		black;
+
+
+/* Joysticks
+*/
+typedef struct
+{
+    Z80Byte	row;
+    Z80Byte	bit;
+} Joykey;
+
+static Joykey		joystick[JOY_NumButtons] =
+{
+    {4, 1 << 2},		/* JOY_Right */
+    {3, 1 << 4},		/* JOY_Left */
+    {4, 1 << 3},		/* JOY_Up */
+    {4, 1 << 4},		/* JOY_Down */
+    {4, 1 << 0},		/* JOY_Button1 */
+    {4, 1 << 0},		/* JOY_Button2 */
+    {4, 1 << 0},		/* JOY_Button3 */
+    {4, 1 << 0}			/* JOY_Button4 */
+};
+
+static int		defining_joykeys = FALSE;
 
 
 /* The keyboard
@@ -765,6 +790,27 @@ static int EDCallback(Z80 *z80, Z80Val data)
 }
 
 
+static void HandleJoystick(JoystickButton button, int pressed)
+{
+    if (defining_joykeys)
+    {
+    }
+    else
+    {
+	Joykey *joy = joystick + button;
+
+	if (pressed)
+	{
+	    matrix[joy->row] &= ~joy->bit;
+	}
+	else
+	{
+	    matrix[joy->row] |= joy->bit;
+	}
+    }
+}
+
+
 /* ---------------------------------------- EXPORTED INTERFACES
 */
 void ZX81Init(Z80 *z80)
@@ -824,6 +870,11 @@ void ZX81Init(Z80 *z80)
 
     white=GFXRGB(230,230,230);
     black=GFXRGB(0,0,0);
+
+    if (IConfig(CONF_JOYSTICK))
+    {
+    	JOYRegister(HandleJoystick);
+    }
 }
 
 
@@ -1014,4 +1065,16 @@ void ZX81Reset(Z80 *z80)
 }
 
 
-/* END OF FILE */
+void ZX81SetupJoystick(void)
+{
+}
+
+
+void ZX81SaveJoystick(void)
+{
+}
+
+
+void ZX81LoadJoystick(void)
+{
+}

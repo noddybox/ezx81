@@ -27,9 +27,9 @@
 #ifndef EZX81_ZX81H
 #define EZX81_ZX81H
 
-#include "z80.h"
-#include "SDL.h"
+#include <SDL.h>
 
+#include "z80.h"
 
 /* Initialise the ZX81
 */
@@ -54,6 +54,12 @@ const Z80Label	*ZX81GetLabels(void);
 const char	*ZX81Info(Z80 *z80);
 void		ZX81EnableScreen(int enable);
 void		ZX81Reset(Z80 *z80);
+
+/* Interfaces for joystick setup
+*/
+void	ZX81SetupJoystick(void);
+void	ZX81SaveJoystick(void);
+void	ZX81LoadJoystick(void);
 
 
 #endif

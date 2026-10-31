@@ -48,6 +48,7 @@ static int	frames=50;
 static int	scale=1;
 static int	trace=0;
 static int	ram_at_2000=0;
+static int	joystick=1;
 
 static const struct
 {
@@ -63,6 +64,7 @@ static const struct
 		{"scale",	&scale,		TRUE},
 		{"trace",	&trace,		TRUE},
 		{"ram_at_2000",	&ram_at_2000,	FALSE},
+		{"joystick",	&joystick,	FALSE},
 		{NULL,		NULL,		FALSE}
 	    };
 
@@ -153,7 +155,8 @@ int IConfig(IConfigVar v)
 		    &frames,
 		    &scale,
 		    &trace,
-		    &ram_at_2000
+		    &ram_at_2000,
+		    &joystick
 		};
 
     return *vars[v];
