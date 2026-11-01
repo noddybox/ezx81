@@ -30,5 +30,6 @@
 typedef unsigned char	FontChar[64];
 
 extern const FontChar font[128];
+extern const FontChar zx81font[256];
 
 #endif

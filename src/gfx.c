@@ -448,6 +448,33 @@ void GFXPrintCentre(int y, Uint32 col, Uint32 paper,
 }
 
 
+void GFXPrintZX81(int x, int y, Uint32 col,
+		  const unsigned char *str, size_t len)
+{
+    size_t l = 0;
+    int sx,sy;
+
+    while (l < len)
+    {
+	for(sy=0;sy<8;sy++)
+	{
+	    if (y+sy<GFX_HEIGHT && x<GFX_WIDTH)
+	    {
+		for(sx=0;sx<8;sx++)
+		{
+		    if (zx81font[*str][sx+sy*8] && x+sx<GFX_WIDTH)
+			putpixel(x+sx,y+sy,col);
+		}
+	    }
+	}
+
+	str++;
+	l++;
+	x+=8;
+    }
+}
+
+
 void GFXBitmap(const GFX_Bitmap *bitmap)
 {
     int cx = (GFX_WIDTH - bitmap->width) / 2;

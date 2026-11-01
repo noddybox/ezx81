@@ -451,7 +451,7 @@ static void DoDisassem(Z80 *z80)
 	    if (hexmode)
 	    {
 		int n;
-		char asc[9];
+		unsigned char asc[8] = {0};
 
 	    	for(n=0;n<8;n++)
 		{
@@ -463,15 +463,10 @@ static void DoDisassem(Z80 *z80)
 
 		    curr++;
 
-		    if (isprint(b))
-		    	asc[n]=b;
-		    else
-		    	asc[n]='.';
+		    asc[n]=b;
 		}
 
-		asc[8]=0;
-
-		GFXPrint(40+8*24,y,RED,"%s",asc);
+		GFXPrintZX81(40+8*24,y, RED, asc, sizeof asc);
 	    }
 	    else
 	    {

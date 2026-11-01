@@ -27,6 +27,7 @@
 #ifndef ESPEC_GFX_H
 #define ESPEC_GFX_H
 
+#include <stddef.h>
 #include <SDL.h>
 #include "gfx-bitmap.h"
 
@@ -169,6 +170,18 @@ void		GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 void		GFXPrintCentre(int y, Uint32 col, Uint32 paper,
 			       const char *format, ...);
 
+
+/* Draws text using an internal ZX81 font.  All 256 characters are supported
+   but unedfined characters output an exclamation mark.
+
+   The co-ord given is the top left of the first character, and characters
+   are drawn transparently.
+
+   As 0x00 is a valid ZX81 character the string isn't assumed null terminated
+   but the assumed to be the passed length.
+*/
+void		GFXPrintZX81(int x, int y, Uint32 col,
+			     const unsigned char *str, size_t len);
 
 /* Draws a simply bitmap centred on the screen
 */
