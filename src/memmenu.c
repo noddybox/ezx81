@@ -1159,7 +1159,7 @@ static void DoMonitor(Z80 *z80)
 
 	if (textevent)
 	{
-	    switch(toupper(GFX_TEXT_ASCII(keyevent)))
+	    switch(toupper(GFX_TEXT_ASCII(textevent)))
 	    {
 		case '\n':
 		    break;
