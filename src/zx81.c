@@ -36,15 +36,6 @@
 #include "exit.h"
 
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-
 /* ---------------------------------------- STATICS
 */
 #define ROMLEN		0x2000
@@ -124,6 +115,9 @@ static Joykey		joystick[JOY_NumButtons] =
 };
 
 static int		defining_joykeys = FALSE;
+static char 		joykey_file[FILENAME_MAX];
+static const char	*joyfile_ext = "joy81";
+static JoystickButton	last_joystick;
 
 
 /* The keyboard
@@ -136,6 +130,7 @@ static unsigned		prev_lk2;
 typedef struct
 {
     SDL_Keycode	key;
+    const char	*display;
     int		m1,b1,m2,b2;
 } MatrixMap;
 
@@ -144,61 +139,61 @@ typedef struct
 
 static const MatrixMap keymap[]=
 {
-    {SDLK_1,		KY1(3,0)},
-    {SDLK_2,		KY1(3,1)},
-    {SDLK_3,		KY1(3,2)},
-    {SDLK_4,		KY1(3,3)},
-    {SDLK_5,		KY1(3,4)},
-    {SDLK_6,		KY1(4,4)},
-    {SDLK_7,		KY1(4,3)},
-    {SDLK_8,		KY1(4,2)},
-    {SDLK_9,		KY1(4,1)},
-    {SDLK_0,		KY1(4,0)},
+    {SDLK_1,		"1",		KY1(3,0)},
+    {SDLK_2,		"2",		KY1(3,1)},
+    {SDLK_3,		"3",		KY1(3,2)},
+    {SDLK_4,		"4",		KY1(3,3)},
+    {SDLK_5,		"5",		KY1(3,4)},
+    {SDLK_6,		"6",		KY1(4,4)},
+    {SDLK_7,		"7",		KY1(4,3)},
+    {SDLK_8,		"8",		KY1(4,2)},
+    {SDLK_9,		"9",		KY1(4,1)},
+    {SDLK_0,		"0",		KY1(4,0)},
 
-    {SDLK_a,		KY1(1,0)},
-    {SDLK_b,		KY1(7,4)},
-    {SDLK_c,		KY1(0,3)},
-    {SDLK_d,		KY1(1,2)},
-    {SDLK_e,		KY1(2,2)},
-    {SDLK_f,		KY1(1,3)},
-    {SDLK_g,		KY1(1,4)},
-    {SDLK_h,		KY1(6,4)},
-    {SDLK_i,		KY1(5,2)},
-    {SDLK_j,		KY1(6,3)},
-    {SDLK_k,		KY1(6,2)},
-    {SDLK_l,		KY1(6,1)},
-    {SDLK_m,		KY1(7,2)},
-    {SDLK_n,		KY1(7,3)},
-    {SDLK_o,		KY1(5,1)},
-    {SDLK_p,		KY1(5,0)},
-    {SDLK_q,		KY1(2,0)},
-    {SDLK_r,		KY1(2,3)},
-    {SDLK_s,		KY1(1,1)},
-    {SDLK_t,		KY1(2,4)},
-    {SDLK_u,		KY1(5,3)},
-    {SDLK_v,		KY1(0,4)},
-    {SDLK_w,		KY1(2,1)},
-    {SDLK_x,		KY1(0,2)},
-    {SDLK_y,		KY1(5,4)},
-    {SDLK_z,		KY1(0,1)},
+    {SDLK_a,		"A",		KY1(1,0)},
+    {SDLK_b,		"B",		KY1(7,4)},
+    {SDLK_c,		"C",		KY1(0,3)},
+    {SDLK_d,		"D",		KY1(1,2)},
+    {SDLK_e,		"E",		KY1(2,2)},
+    {SDLK_f,		"F",		KY1(1,3)},
+    {SDLK_g,		"G",		KY1(1,4)},
+    {SDLK_h,		"H",		KY1(6,4)},
+    {SDLK_i,		"I",		KY1(5,2)},
+    {SDLK_j,		"J",		KY1(6,3)},
+    {SDLK_k,		"K",		KY1(6,2)},
+    {SDLK_l,		"L",		KY1(6,1)},
+    {SDLK_m,		"M",		KY1(7,2)},
+    {SDLK_n,		"N",		KY1(7,3)},
+    {SDLK_o,		"O",		KY1(5,1)},
+    {SDLK_p,		"P",		KY1(5,0)},
+    {SDLK_q,		"Q",		KY1(2,0)},
+    {SDLK_r,		"R",		KY1(2,3)},
+    {SDLK_s,		"S",		KY1(1,1)},
+    {SDLK_t,		"T",		KY1(2,4)},
+    {SDLK_u,		"U",		KY1(5,3)},
+    {SDLK_v,		"V",		KY1(0,4)},
+    {SDLK_w,		"W",		KY1(2,1)},
+    {SDLK_x,		"X",		KY1(0,2)},
+    {SDLK_y,		"Y",		KY1(5,4)},
+    {SDLK_z,		"Z",		KY1(0,1)},
 
-    {SDLK_RETURN,	KY1(6,0)},
-    {SDLK_SPACE,	KY1(7,0)},
+    {SDLK_RETURN,	"Return",	KY1(6,0)},
+    {SDLK_SPACE,	"Space",	KY1(7,0)},
 
-    {SDLK_COMMA,	KY1(7,1)},	/* In the right place... */
-    {SDLK_PERIOD,	KY1(7,1)},	/* ...or the right key... */
+    {SDLK_COMMA,	".",		KY1(7,1)},	/* Correct place...   */
+    {SDLK_PERIOD,	".",		KY1(7,1)},	/* ...or correct key. */
 
-    {SDLK_BACKSPACE,	KY2(0,0,4,0)},
-    {SDLK_DELETE,	KY2(0,0,4,0)},
-    {SDLK_UP,		KY2(0,0,4,3)},
-    {SDLK_DOWN,		KY2(0,0,4,4)},
-    {SDLK_LEFT,		KY2(0,0,3,4)},
-    {SDLK_RIGHT,	KY2(0,0,4,2)},
+    {SDLK_BACKSPACE,	NULL,		KY2(0,0,4,0)},
+    {SDLK_DELETE,	NULL,		KY2(0,0,4,0)},
+    {SDLK_UP,		NULL,		KY2(0,0,4,3)},
+    {SDLK_DOWN,		NULL,		KY2(0,0,4,4)},
+    {SDLK_LEFT, 	NULL,		KY2(0,0,3,4)},
+    {SDLK_RIGHT, 	NULL,		KY2(0,0,4,2)},
 
-    {SDLK_RSHIFT,	KY1(0,0)},
-    {SDLK_LSHIFT,	KY1(0,0)},
+    {SDLK_RSHIFT,	"Shift",	KY1(0,0)},
+    {SDLK_LSHIFT,	"Shift",	KY1(0,0)},
 
-    {SDLK_UNKNOWN,	0,0,0,0},
+    {SDLK_UNKNOWN,	NULL,		0,0,0,0},
 };
 
 
@@ -333,6 +328,52 @@ static const char *ConvertFilename(Z80Word addr)
 }
 
 
+static void SaveJoystick(const char *path)
+{
+    FILE *fp;
+    int f;
+
+    if (!(fp = fopen(path, "wb")))
+    {
+	GUIMessage(eMessageBox,
+		   "ERROR","Failed to open save\nfile for joystick mappings");
+
+	return;
+    }
+
+    for(f = 0; f < JOY_NumButtons; f++)
+    {
+    	fwrite(&joystick[f].row, 1, 1, fp);
+    	fwrite(&joystick[f].bit, 1, 1, fp);
+    }
+
+    fclose(fp);
+}
+
+
+static void LoadJoystick(const char *path)
+{
+    FILE *fp;
+    int f;
+
+    if (!(fp = fopen(path, "rb")))
+    {
+	GUIMessage(eMessageBox,
+		   "ERROR","Failed to open load\n file for joystick mappings");
+
+	return;
+    }
+
+    for(f = 0; f < JOY_NumButtons; f++)
+    {
+    	fread(&joystick[f].row, 1, 1, fp);
+    	fread(&joystick[f].bit, 1, 1, fp);
+    }
+
+    fclose(fp);
+}
+
+
 static void LoadTape(Z80 *cpu)
 {
     Z80State state;
@@ -341,6 +382,7 @@ static void LoadTape(Z80 *cpu)
     FILE *fp;
     Z80Word addr;
     int c;
+    const char *joyfile;
 
     Z80GetState(cpu, &state);
 
@@ -351,15 +393,15 @@ static void LoadTape(Z80 *cpu)
 	static char selected_file[FILENAME_MAX];
 
 	/* Clear the keys as otherwise the ENTER up is consumed
-	   by the GUI and the Spectrum thinks the ENTER key is being
+	   by the GUI and the ZX81 thinks the ENTER key is being
 	   held down.
 	*/
 	ClearKeys();
 
-	if (GUIFileSelect(".P FILE TO LOAD",TRUE,
+	if (GUIFileSelect("SNAPSHOT FILE TO LOAD",TRUE,
 			  selected_file[0] ? Dirname(selected_file) :
 					     SConfig(CONF_TAPEDIR),
-			  selected_file))
+			  selected_file, "P"))
 	{
 	    strcpy(path, selected_file);
 	}
@@ -393,6 +435,13 @@ static void LoadTape(Z80 *cpu)
     }
 
     fclose(fp);
+
+    joyfile = ReplaceExtension(path, joyfile_ext);
+
+    if (FileExists(joyfile))
+    {
+    	LoadJoystick(joyfile);
+    }
 }
 
 
@@ -790,10 +839,32 @@ static int EDCallback(Z80 *z80, Z80Val data)
 }
 
 
+static const char *LastJoystick(void)
+{
+    static const char *name[] =
+    {
+    	"Right",
+    	"Left",
+    	"Up",
+    	"Down",
+    	"Button 1",
+    	"Button 2",
+    	"Button 3",
+    	"Button 4",
+    };
+
+    return name[last_joystick];
+}
+
+
 static void HandleJoystick(JoystickButton button, int pressed)
 {
     if (defining_joykeys)
     {
+    	if (pressed)
+	{
+	    last_joystick = button;
+	}
     }
     else
     {
@@ -1067,14 +1138,120 @@ void ZX81Reset(Z80 *z80)
 
 void ZX81SetupJoystick(void)
 {
+    Uint32 white;
+    Uint32 black;
+    Uint32 red;
+    Uint32 green;
+    int f;
+
+    white = GFXRGB(255, 255, 255);
+    black = GFXRGB(0, 0, 0);
+    red = GFXRGB(255, 0, 0);
+    green = GFXRGB(0, 255, 0);
+
+    ClearKeys();
+
+    defining_joykeys = TRUE;
+
+    GFXClear(black);
+
+    GFXRect(0, 0, GFX_WIDTH, GFX_HEIGHT, red, TRUE);
+    GFXRect(8, 8, GFX_WIDTH - 16, GFX_HEIGHT - 16, black, TRUE);
+
+    GFXPrintCentre(10, green, black, "%s", "JOYSTICK MAPPING");
+    GFXPrintCentre(26, white, black, "%s",
+    				"Press joystick direction or button");
+    GFXPrintCentre(34, white, black, "%s", "then key to map it onto.");
+    GFXPrintCentre(42, white, black, "%s", "Press ESCAPE to finish.");
+
+    GFXEndFrame(FALSE);
+
+    while(TRUE)
+    {
+    	SDL_Event *e;
+	JoystickButton button;
+	const MatrixMap *map;
+
+	last_joystick = JOY_NumButtons;
+
+	GFXPrintPaper(10, GFX_HEIGHT - 20, green, black,
+				"%s", "PRESS JOYSTICK");
+	GFXEndFrame(FALSE);
+
+	do
+	{
+	    e = GFXGetKey();
+
+	    if (e && e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_ESCAPE)
+	    {
+		defining_joykeys = FALSE;
+		return;
+	    }
+	} while(last_joystick == JOY_NumButtons);
+
+	GFXPrintPaper(10, 60, white, black,
+				"Joystick: %-20.20s", LastJoystick());
+	GFXPrintPaper(10, GFX_HEIGHT - 20, green, black,
+						"%s", "PRESS KEY     ");
+	GFXEndFrame(FALSE);
+
+	button = last_joystick;
+
+	do
+	{
+	    map = NULL;
+	    e = GFXGetKey();
+
+	    if (e && e->type == SDL_KEYDOWN)
+	    {
+		if (e->key.keysym.sym == SDLK_ESCAPE)
+		{
+		    defining_joykeys = FALSE;
+		    return;
+		}
+
+		for(f = 0; keymap[f].key != SDLK_UNKNOWN && !map; f++)
+		{
+		    if (keymap[f].key == e->key.keysym.sym && keymap[f].display)
+		    {
+			map = keymap + f;
+		    }
+		}
+	    }
+	} while(!map);
+
+	GFXPrintPaper(10, 70, white, black, "Key: %-20.20s", map->display);
+	GFXEndFrame(FALSE);
+
+	joystick[button].row = map->m1;
+	joystick[button].bit = map->b1;
+    }
 }
 
 
 void ZX81SaveJoystick(void)
 {
+    ClearKeys();
+
+    if (GUIFileSelect("JOYSTICK FILE TO SAVE", FALSE,
+		      joykey_file[0] ? Dirname(joykey_file) :
+					 SConfig(CONF_TAPEDIR),
+		      joykey_file, joyfile_ext))
+    {
+	SaveJoystick(joykey_file);
+    }
 }
 
 
 void ZX81LoadJoystick(void)
 {
+    ClearKeys();
+
+    if (GUIFileSelect("JOYSTICK FILE TO LOAD", TRUE,
+		      joykey_file[0] ? Dirname(joykey_file) :
+					 SConfig(CONF_TAPEDIR),
+		      joykey_file, joyfile_ext))
+    {
+	LoadJoystick(joykey_file);
+    }
 }

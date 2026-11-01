@@ -29,6 +29,16 @@
 
 #include <stdlib.h>
 
+/* ---------------------------------------- MACROS
+*/
+#ifndef TRUE
+#define TRUE	1
+#endif
+
+#ifndef FALSE
+#define FALSE	0
+#endif
+
 /* ---------------------------------------- INTERFACES
 */
 
@@ -53,6 +63,13 @@ char		*StrCopy(const char *source);
 const char	*Basename(const char *path);
 
 
+/* Check the extension of a file, case insensitive.  The passed extension
+   should not be preceeded with a period.  If the passed extension is NULL
+   then TRUE is always returned.
+*/
+int		CheckExtension(const char *path, const char *extension);
+
+
 /* Returns the directory portion of path.  Note returned pointer is internal
    static storage.  If there are no directory seperators in path, "." is
    returned.
@@ -60,11 +77,24 @@ const char	*Basename(const char *path);
 const char	*Dirname(const char *path);
 
 
+/* Replace the extension on the passed filename with the passed extension.
+   Note returned pointer is internal static storage.
+   returned.
+*/
+const char	*ReplaceExtension(const char *path, const char *extension);
+
+
 /* Writes the passed text to debug.txt.  Note this is interface is not
    able to be switched on/off, so debug is only used in a transient way
    (once the bug is fixed, calls to this should be removed).
 */
 void		Debug(const char *format,...);
+
+
+/* See if the passed strings match, case insensitive.  Returns TRUE if they
+    match, otherwise FALSE.
+*/
+int		Compare(const char *a, const char *b);
 
 
 /* See if the passed strings match, case insensitive, up to the passed length.

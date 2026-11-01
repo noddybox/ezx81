@@ -28,6 +28,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <unistd.h>
+
 #include "util.h"
 #include "exit.h"
 
@@ -35,6 +37,10 @@
 /* ---------------------------------------- MACROS
 */
 #define DIRSEP	'/'
+
+
+/* ---------------------------------------- INTERFACES
+*/
 
 /* ---------------------------------------- INTERFACES
 */
@@ -68,15 +74,35 @@ char *StrCopy(const char *source)
 
 const char *Basename(const char *path)
 {
-    const char *p=path+strlen(path);
+    const char *p = path + strlen(path);
 
-    while(p>path && *p!=DIRSEP)
+    while(p > path && *p == DIRSEP)
     	p--;
 
-    if (p>path)
+    if (p > path)
     	p++;
 
     return p;
+}
+
+
+int CheckExtension(const char *path, const char *extension)
+{
+    const char *p;
+
+    if (!extension)
+    {
+    	return TRUE;
+    }
+
+    p = strrchr(path, '.');
+
+    if (!p)
+    {
+    	return FALSE;
+    }
+
+    return Compare(p + 1, extension);
 }
 
 
@@ -85,17 +111,13 @@ const char *Dirname(const char *path)
     static char dir[FILENAME_MAX];
     char *p;
 
-    strcpy(dir,path);
+    strcpy(dir, path);
 
-    p=dir+strlen(dir);
+    p = strrchr(dir, DIRSEP);
 
-    while(p>dir && *p!=DIRSEP)
-    	p--;
-
-    if (p>path)
+    if (p)
     {
-    	p++;
-	*p=0;
+    	*++p = 0;
     }
     else
     {
@@ -106,31 +128,45 @@ const char *Dirname(const char *path)
 }
 
 
-void Debug(const char *format, ...)
+const char *ReplaceExtension(const char *path, const char *extension)
 {
-    static const int USE_STDERR=1;
-    static FILE *fp=NULL;
-    va_list ap;
+    static char result[FILENAME_MAX];
+    char *p;
 
-    if (!fp)
+    strcpy(result, path);
+
+    p = strrchr(result, '.');
+
+    if (p)
     {
-	if (USE_STDERR)
-	{
-	    fp=stderr;
-	}
-	else
-	{
-	    fp=fopen("debug.txt","w");
-	    setbuf(fp,NULL);
-	}
+    	*++p = 0;
+	strcat(result, extension);
     }
 
-    if (!fp)
-    	return;
+    return result;
+}
 
-    va_start(ap,format);
-    vfprintf(fp,format,ap);
+
+void Debug(const char *format, ...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
     va_end(ap);
+}
+
+
+int Compare(const char *a, const char *b)
+{
+    while(*a && *b &&
+    		tolower((unsigned char)*a) == tolower((unsigned char)*b))
+    {
+	a++;
+	b++;
+    }
+
+    return *a ==0 && *b == 0;
 }
 
 
@@ -150,18 +186,5 @@ int StartsWith(const char *a, const char *b, size_t len)
 
 int FileExists(const char *path)
 {
-    FILE *fp;
-
-    fp = fopen(path, "rb");
-
-    if (fp)
-    {
-    	fclose(fp);
-	return 1;
-    }
-
-    return 0;
+    return access(path, F_OK) == 0;
 }
-
-
-/* END OF FILE */

@@ -28,14 +28,7 @@
 #include <string.h>
 #include "exit.h"
 #include "config.h"
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
+#include "util.h"
 
 
 /* ---------------------------------------- CONFIG

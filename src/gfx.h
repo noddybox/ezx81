@@ -86,6 +86,11 @@ void		GFXStartFrame(void);
 void		GFXEndFrame(int delay);
 
 
+/* Enable/disable text input via flag, returning the previous setting.
+*/
+int		GFXSetTextInput(int enable);
+
+
 /* Set key repeat
 */
 void		GFXKeyRepeat(int repeat);
@@ -157,6 +162,12 @@ void		GFXPrint(int x, int y, Uint32 col, const char *format, ...);
 */
 void		GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
 			      const char *format, ...);
+
+
+/* As above, but centres text using the supplied ink and paper colour.
+*/
+void		GFXPrintCentre(int y, Uint32 col, Uint32 paper,
+			       const char *format, ...);
 
 
 /* Draws a simply bitmap centred on the screen

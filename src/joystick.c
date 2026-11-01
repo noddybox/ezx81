@@ -27,15 +27,6 @@
 #include "gui.h"
 #include "util.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-
 /* ---------------------------------------- STATICS
 */
 static SDL_Joystick	*joystick;
@@ -169,6 +160,7 @@ void JOYPump(SDL_Event *e)
 	    break;
 
 	case SDL_JOYBUTTONDOWN:
+	    Debug("Button %d DOWN\n", e->jbutton.button);
 	    if (e->jbutton.button < 5)
 	    {
 	    	ButtonPress(JOY_Button1 + e->jbutton.button, TRUE);
@@ -176,6 +168,7 @@ void JOYPump(SDL_Event *e)
 	    break;
 
 	case SDL_JOYBUTTONUP:
+	    Debug("Button %d UP\n", e->jbutton.button);
 	    if (e->jbutton.button < 5)
 	    {
 	    	ButtonPress(JOY_Button1 + e->jbutton.button, FALSE);

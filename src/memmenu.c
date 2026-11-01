@@ -37,14 +37,6 @@
 
 #include <SDL.h>
 
-#ifndef TRUE
-#define TRUE		1
-#endif
-
-#ifndef FALSE
-#define FALSE		0
-#endif
-
 #define WHITE		GFXRGB(255,255,255)
 #define BLACK		GFXRGB(0,0,0)
 #define RED		GFXRGB(255,100,100)
@@ -1279,6 +1271,8 @@ int MemoryMenu(Z80 *z80)
     int quit=FALSE;
     int y;
 
+    GFXSetTextInput(TRUE);
+
     while(!done)
     {
 	DisplayMenu();
@@ -1377,6 +1371,7 @@ int MemoryMenu(Z80 *z80)
     }
 
     GFXClear(BLACK);
+    GFXSetTextInput(FALSE);
     return quit;
 }
 

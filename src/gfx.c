@@ -37,16 +37,6 @@
 #include "font.h"
 
 
-/* ---------------------------------------- MACROS
-*/
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 /* ---------------------------------------- STATICS
 */
 static SDL_Window       *window;
@@ -244,6 +234,23 @@ void GFXEndFrame(int delay)
 }
 
 
+int GFXSetTextInput(int enable)
+{
+    int state = SDL_IsTextInputActive();
+
+    if (enable)
+    {
+    	SDL_StartTextInput();
+    }
+    else
+    {
+    	SDL_StopTextInput();
+    }
+
+    return state;
+}
+
+
 SDL_Event *GFXGetKey(void)
 {
     static SDL_Event e;
@@ -377,6 +384,45 @@ void GFXPrintPaper(int x, int y, Uint32 col, Uint32 paper,
     va_start(va,format);
     vsprintf(buff,format,va);
     va_end(va);
+
+    p=buff;
+
+    while(*p)
+    {
+	for(sy=0;sy<8;sy++)
+	{
+	    if (y+sy<GFX_HEIGHT && x<GFX_WIDTH)
+	    {
+		for(sx=0;sx<8;sx++)
+		{
+		    if (font[(int)*p][sx+sy*8] && x+sx<GFX_WIDTH)
+			putpixel(x+sx,y+sy,col);
+		    else
+			putpixel(x+sx,y+sy,paper);
+		}
+	    }
+	}
+
+	p++;
+	x+=8;
+    }
+}
+
+
+void GFXPrintCentre(int y, Uint32 col, Uint32 paper,
+		     const char *format, ...)
+{
+    char buff[257];
+    va_list va;
+    char *p;
+    int x;
+    int sx,sy;
+
+    va_start(va,format);
+    vsprintf(buff,format,va);
+    va_end(va);
+
+    x = (GFX_WIDTH - strlen(buff) * 8) / 2;
 
     p=buff;
 

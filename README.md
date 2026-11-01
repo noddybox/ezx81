@@ -76,7 +76,7 @@ key.  Follow the on-screen prompts.
 The defined mapping can be saved and loaded with F8 and F9 respectively.
 
 When loading a .P file the emulator will look for the same filename with the
-.P replaced with .joy81 and load those mapping automatically.
+.P replaced with .JOY81 and load those mapping automatically.
 
 ## Memory Menu
 

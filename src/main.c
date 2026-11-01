@@ -36,19 +36,12 @@
 #include "joystick.h"
 #include "exit.h"
 #include "bitmaps.h"
+#include "util.h"
 
 
 /* ---------------------------------------- MACROS
 */
 #define EZX81_VERSION	"V1.0-dev"
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
 
 
 /* ---------------------------------------- STATICS
@@ -91,6 +84,8 @@ int main(int argc, char *argv[])
     {
     	JOYInit();
     }
+
+    GFXSetTextInput(FALSE);
 
     ZX81Init(z80);
 

@@ -44,14 +44,6 @@
 
 /* ---------------------------------------- MACROS
 */
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #define WHITE	GFXRGB(255,255,255)
 #define BLACK	GFXRGB(0,0,0)
 #define RED	GFXRGB(255,100,100)
@@ -129,9 +121,12 @@ static int DoList(const char *title, int no, char * const list[], int *option,
     char match[MAX_MATCH + 1] = {0};
     size_t input_len = 0;
     int is_text;
+    int text_input;
 
     if (no==0)
     	return LIST_CANCEL;
+
+    text_input = GFXSetTextInput(TRUE);
 
     if (input)
     {
@@ -369,6 +364,8 @@ static int DoList(const char *title, int no, char * const list[], int *option,
 	    }
 	}
     }
+
+    GFXSetTextInput(text_input);
 
     if (input && input_len)
     {
@@ -608,17 +605,23 @@ void GUIDisplayList(const char *title, int no, char * const list[])
 
 
 int GUIFileSelect(const char *prompt, int load,
-		  const char *start_dir, char path[])
+		  const char *start_dir, char path[], const char *extension)
 {
     int done=FALSE;
     int ret=FALSE;
     char olddir[MAXPATHLEN+1];
     char pwd[MAXPATHLEN+1];
     char input[MAXPATHLEN + 1];
+    int state;
 
     getcwd(olddir,MAXPATHLEN);
 
-    chdir(start_dir);
+    if (chdir(start_dir) == -1)
+    {
+    	chdir(Dirname(start_dir));
+    }
+
+    state = GFXSetTextInput(TRUE);
 
     while(!done)
     {
@@ -656,7 +659,8 @@ int GUIFileSelect(const char *prompt, int load,
 		    fe[no].is_dir=TRUE;
 		    no++;
 		}
-		else if (S_ISREG(sbuf.st_mode) && de->d_name[0]!='.')
+		else if (S_ISREG(sbuf.st_mode) && de->d_name[0]!='.' &&
+			   CheckExtension(de->d_name, extension))
 		{
 		    strcpy(fe[no].name,de->d_name);
 		    fe[no].is_dir=FALSE;
@@ -691,21 +695,42 @@ int GUIFileSelect(const char *prompt, int load,
 	}
 	else
 	{
-	    if (fe[sel].is_dir)
-	    {
-		chdir(fe[sel].name);
-	    }
-	    else
+	    if (sel == LIST_NEW)
 	    {
 		strcpy(path,pwd);
 		
 		if (path[strlen(path)]!='/')
 		    strcat(path,"/");
 
-		strcat(path,fe[sel].name);
+		strcat(path,input);
+
+		if (!CheckExtension(path, extension))
+		{
+		    strcat(path, ".");
+		    strcat(path, extension);
+		}
 
 		done=TRUE;
 		ret=TRUE;
+	    }
+	    else
+	    {
+		if (fe[sel].is_dir)
+		{
+		    chdir(fe[sel].name);
+		}
+		else
+		{
+		    strcpy(path,pwd);
+		    
+		    if (path[strlen(path)]!='/')
+			strcat(path,"/");
+
+		    strcat(path,fe[sel].name);
+
+		    done=TRUE;
+		    ret=TRUE;
+		}
 	    }
 	}
 
@@ -717,6 +742,8 @@ int GUIFileSelect(const char *prompt, int load,
 	free(list);
 	free(de);
     }
+
+    GFXSetTextInput(state);
 
     return ret;
 }

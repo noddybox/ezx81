@@ -76,11 +76,12 @@ void		GUIDisplayList(const char *title, int no, char * const list[]);
 
    Returns TRUE for selected, FALSE for cancelled.
 
-   path holds the new file entered.  Note that start_dir can be a path to a
-   file - if chdir(start_dir) would not work, then it is tried with the
-   dirname(1) of start_dir.
+   path holds the new file entered or existing file selected.
 
-   Also start_dir and path can be the same pointer:
+   Note that start_dir can be a path to a file - if chdir(start_dir) does not
+   work, then it is tried with the Dirname(start_dir).
+
+   Also start_dir and path can be from the same pointer:
 
 	char file[FILENAME_MAX]="/home/foobar/dir/file.tap";
 
@@ -88,11 +89,18 @@ void		GUIDisplayList(const char *title, int no, char * const list[]);
 	    ....
 
    Will work fine.
+
+   If extenstion is not NULL then only files with that extension (case
+   insensitive) will be listed.  Also the entered name with have that
+   appended (with the same case as the passed extension) if it's not in the
+   entered name.  The passed extension should not have a period,
+   e.g. "p", not ".p".
 */
 int		GUIFileSelect(const char *prompt,
 			      int load,
 			      const char *start_dir,
-			      char path[]);
+			      char path[],
+			      const char *extension);
 
 
 #endif
