@@ -111,6 +111,3 @@ int		FileExists(const char *path);
 
 
 #endif
-
-
-/* END OF FILE */

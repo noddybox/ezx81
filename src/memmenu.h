@@ -46,6 +46,3 @@ const char	*Break(void);
 
 
 #endif
-
-
-/* END OF FILE */

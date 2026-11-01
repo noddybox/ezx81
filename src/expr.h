@@ -53,7 +53,4 @@ int		ExprEval(const char *expr, long *result,
 */
 const char	*ExprError(void);
 
-
 #endif
-
-/* END OF FILE */

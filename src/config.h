@@ -67,6 +67,3 @@ const char	*SConfig(SConfigVar v);
 
 
 #endif
-
-
-/* END OF FILE */

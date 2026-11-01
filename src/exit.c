@@ -47,6 +47,3 @@ void Exit(const char *format,...)
 
     exit(EXIT_FAILURE);
 }
-
-
-/* END OF FILE */

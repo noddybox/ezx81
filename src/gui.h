@@ -104,6 +104,3 @@ int		GUIFileSelect(const char *prompt,
 
 
 #endif
-
-
-/* END OF FILE */

@@ -166,6 +166,3 @@ const char *SConfig(SConfigVar v)
 
     return vars[v];
 }
-
-
-/* END OF FILE */

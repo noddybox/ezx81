@@ -2470,5 +2470,3 @@ DIS_OP_CALLBACK	dis_opcode_z80[0x100]=
 
 
 #endif
-
-/* END OF FILE */

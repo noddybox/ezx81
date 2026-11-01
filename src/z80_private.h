@@ -246,5 +246,3 @@ const char	*Z80_Dis_GetArg(void);
 #endif	/* ENABLE_DISASSEM */
 
 #endif	/* Z80_PRIVATE_H */
-
-/* END OF FILE */

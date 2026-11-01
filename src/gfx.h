@@ -174,8 +174,4 @@ void		GFXPrintCentre(int y, Uint32 col, Uint32 paper,
 */
 void		GFXBitmap(const GFX_Bitmap *bitmap);
 
-
 #endif
-
-
-/* END OF FILE */

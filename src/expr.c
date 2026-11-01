@@ -728,6 +728,3 @@ const char *ExprError(void)
 {
     return error;
 }
-
-
-/* END OF FILE */

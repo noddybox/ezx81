@@ -1385,6 +1385,3 @@ const char *Break(void)
 
     return ret;
 }
-
-
-/* END OF FILE */

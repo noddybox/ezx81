@@ -1090,6 +1090,3 @@ const FontChar font[128]=
 	},
 	NULLCHARDEF,	/* 7f */
 };
-
-
-/* END OF FILE */

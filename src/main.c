@@ -51,10 +51,6 @@ static Uint32	black;
 static Uint32	grey;
 
 
-/* ---------------------------------------- PROTOS
-*/
-
-
 /* ---------------------------------------- MAIN
 */
 int main(int argc, char *argv[])
@@ -218,10 +214,3 @@ int main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
-
-
-/* ---------------------------------------- PRIVATE FUNCTIONS
-*/
-
-
-/* END OF FILE */

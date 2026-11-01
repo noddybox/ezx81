@@ -258,5 +258,3 @@ void	Z80SetLabels(Z80 *cpu, const Z80Label labels[]);
 const char *Z80Disassemble(Z80 *cpu, Z80Word *addr);
 
 #endif
-
-/* END OF FILE */

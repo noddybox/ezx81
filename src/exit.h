@@ -34,6 +34,3 @@ void	Exit(const char *format,...);
 
 
 #endif
-
-
-/* END OF FILE */

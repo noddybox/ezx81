@@ -63,6 +63,3 @@ void	ZX81LoadJoystick(void);
 
 
 #endif
-
-
-/* END OF FILE */
