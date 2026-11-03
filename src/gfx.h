@@ -92,11 +92,6 @@ void		GFXEndFrame(int delay);
 int		GFXSetTextInput(int enable);
 
 
-/* Set key repeat
-*/
-void		GFXKeyRepeat(int repeat);
-
-
 /* Get next keyboard up/down event.  Returns NULL if no more keyboard events
 */
 SDL_Event	*GFXGetKey(void);
