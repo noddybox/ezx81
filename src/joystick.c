@@ -93,7 +93,7 @@ void JOYSelect(void)
 	sprintf(list[f], "%-32.32s", name);
     }
 
-    select = GUIListSelect("SELECT A JOYSTICK", num, list);
+    select = GUIListSelect("SELECT A JOYSTICK", num, GUI_LIST_CAST(list));
 
     if (select == -1)
     {
@@ -160,7 +160,6 @@ void JOYPump(SDL_Event *e)
 	    break;
 
 	case SDL_JOYBUTTONDOWN:
-	    Debug("Button %d DOWN\n", e->jbutton.button);
 	    if (e->jbutton.button < 5)
 	    {
 	    	ButtonPress(JOY_Button1 + e->jbutton.button, TRUE);
@@ -168,7 +167,6 @@ void JOYPump(SDL_Event *e)
 	    break;
 
 	case SDL_JOYBUTTONUP:
-	    Debug("Button %d UP\n", e->jbutton.button);
 	    if (e->jbutton.button < 5)
 	    {
 	    	ButtonPress(JOY_Button1 + e->jbutton.button, FALSE);

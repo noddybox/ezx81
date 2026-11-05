@@ -109,7 +109,7 @@ static void Box(const char *title, int x, int y, int width, int height)
 }
 
 
-static int DoList(const char *title, int no, char *list[],
+static int DoList(const char *title, int no, const char * const list[],
 		  int *option, char *input, int display_only)
 {
     static const int max=GFX_HEIGHT/8-8;
@@ -566,14 +566,14 @@ const char *GUIInputString(const char *prompt, const char *orig)
 }
 
 
-int GUIListSelect(const char *title, int no, char *list[])
+int GUIListSelect(const char *title, int no, const char * const list[])
 {
     return DoList(title, no,list, NULL, NULL, FALSE);
 }
 
 
 int GUIListOption(const char *title, int no, 
-		  char *list[], int option[])
+		  const char * const list[], int option[])
 {
     int *o;
     int sel;
@@ -599,7 +599,7 @@ int GUIListOption(const char *title, int no,
 }
 
 
-void GUIDisplayList(const char *title, int no, char *list[])
+void GUIDisplayList(const char *title, int no, const char * const list[])
 {
     DoList(title, no, list, NULL, NULL, TRUE);
 }
@@ -687,7 +687,8 @@ int GUIFileSelect(const char *prompt, int load,
 		sprintf(list[f],"%-20.20s %9u",fe[f].name,fe[f].size);
 	}
 
-	sel=DoList(pwd, no, list, NULL, load ? NULL:input, FALSE);
+	sel=DoList(pwd, no, GUI_LIST_CAST(list), NULL,
+		   load ? NULL:input, FALSE);
 
 	if (sel == -1)
 	{

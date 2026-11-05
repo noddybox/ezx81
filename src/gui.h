@@ -27,6 +27,15 @@
 #ifndef EZX81_GUI_H
 #define EZX81_GUI_H
 
+/* ---------------------------------------- MACROS
+*/
+
+/* C doesn't like passing char ** to the list routines, so cast to the
+   appropriate type.  Much rather it if C would allow a "char **list" for a
+   "const char * const list[]"
+*/
+#define GUI_LIST_CAST(p)	((const char * const *)(p))
+
 /* ---------------------------------------- INTERFACES
 */
 
@@ -54,7 +63,8 @@ const char	*GUIInputString(const char *prompt, const char *orig);
 /* Selects an entry from a list.  Returns the index selected, or
    -1 if cancelled.
 */
-int		GUIListSelect(const char *title, int no, char *list[]);
+int		GUIListSelect(const char *title, int no,
+			      const char * const list[]);
 
 
 /* Allows options to be toggled in a list.  Returns FALSE for cancelled (in
@@ -62,12 +72,13 @@ int		GUIListSelect(const char *title, int no, char *list[]);
    updated.
 */
 int		GUIListOption(const char *title,
-			      int no, char *list[], int option[]);
+			      int no, const char * const list[], int option[]);
 
 
 /* Displays a list.
 */
-void		GUIDisplayList(const char *title, int no, char *list[]);
+void		GUIDisplayList(const char *title, int no,
+			       const char * const list[]);
 
 
 /* Select a file from the given directory.

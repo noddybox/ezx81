@@ -954,7 +954,7 @@ static void DoActiveBreakpoint(Z80 *z80)
     GFXClear(BLACK);
 
     GUIListOption("SELECT ACTIVE BREAKPOINTS",
-		  bpoint.no,bpoint.expr,bpoint.active);
+		  bpoint.no,GUI_LIST_CAST(bpoint.expr),bpoint.active);
 }
 
 
@@ -970,7 +970,8 @@ static void DoRemoveBreakpoint(Z80 *z80)
 
     GFXClear(BLACK);
 
-    sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
+    sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,
+		      GUI_LIST_CAST(bpoint.expr));
 
     while (sel!=-1)
     {
@@ -1002,7 +1003,8 @@ static void DoRemoveBreakpoint(Z80 *z80)
 
 	ClearCallback(z80);
 
-	sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,bpoint.expr);
+	sel=GUIListSelect("BREAKPOINT TO DELETE",bpoint.no,
+			  GUI_LIST_CAST(bpoint.expr));
     }
 }
 
@@ -1244,7 +1246,7 @@ static void DoDisplayLabels(void)
 
     qsort(list, no, sizeof *list, SortNames);
 
-    GUIDisplayList("LABELS", no, list);
+    GUIDisplayList("LABELS", no, GUI_LIST_CAST(list));
 
     for(int f = 0; f < no; f++)
     {
