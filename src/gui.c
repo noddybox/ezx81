@@ -109,8 +109,8 @@ static void Box(const char *title, int x, int y, int width, int height)
 }
 
 
-static int DoList(const char *title, int no, char * const list[], int *option,
-                  char *input, int display_only)
+static int DoList(const char *title, int no, char *list[],
+		  int *option, char *input, int display_only)
 {
     static const int max=GFX_HEIGHT/8-8;
     SDL_Event *e;
@@ -566,13 +566,14 @@ const char *GUIInputString(const char *prompt, const char *orig)
 }
 
 
-int GUIListSelect(const char *title, int no, char * const list[])
+int GUIListSelect(const char *title, int no, char *list[])
 {
     return DoList(title, no,list, NULL, NULL, FALSE);
 }
 
 
-int GUIListOption(const char *title, int no, char * const list[], int option[])
+int GUIListOption(const char *title, int no, 
+		  char *list[], int option[])
 {
     int *o;
     int sel;
@@ -598,7 +599,7 @@ int GUIListOption(const char *title, int no, char * const list[], int option[])
 }
 
 
-void GUIDisplayList(const char *title, int no, char * const list[])
+void GUIDisplayList(const char *title, int no, char *list[])
 {
     DoList(title, no, list, NULL, NULL, TRUE);
 }

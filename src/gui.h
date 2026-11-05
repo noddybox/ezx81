@@ -54,7 +54,7 @@ const char	*GUIInputString(const char *prompt, const char *orig);
 /* Selects an entry from a list.  Returns the index selected, or
    -1 if cancelled.
 */
-int		GUIListSelect(const char *title, int no, char * const list[]);
+int		GUIListSelect(const char *title, int no, char *list[]);
 
 
 /* Allows options to be toggled in a list.  Returns FALSE for cancelled (in
@@ -62,12 +62,12 @@ int		GUIListSelect(const char *title, int no, char * const list[]);
    updated.
 */
 int		GUIListOption(const char *title,
-			      int no, char * const list[], int option[]);
+			      int no, char *list[], int option[]);
 
 
 /* Displays a list.
 */
-void		GUIDisplayList(const char *title, int no, char * const list[]);
+void		GUIDisplayList(const char *title, int no, char *list[]);
 
 
 /* Select a file from the given directory.
