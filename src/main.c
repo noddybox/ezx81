@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 				   "F3  - View ZX81 keyboard          \n"
 				   "F5  - Reset ZX81                  \n"
 				   "F6  - Select Joytick              \n"
-				   "F7  - Select Joytick Keys         \n"
+				   "F7  - Define Joytick Key Mapping  \n"
 				   "F8  - Save Joytick Mapping        \n"
 				   "F9  - Load Joytick Mapping        \n"
 				   "F11 - Memory Menu                 \n"
