@@ -67,6 +67,14 @@ int		GUIListSelect(const char *title, int no,
 			      const char * const list[]);
 
 
+/* Selects an entry from a list as a menu.  Returns the index selected, or
+   -1 if cancelled.  The initial selection is the passed in selected if
+   valid.
+*/
+int		GUIMenu(const char *title, int no, int selected,
+			const char * const list[]);
+
+
 /* Allows options to be toggled in a list.  Returns FALSE for cancelled (in
    which case option will be as it was.  TRUE if accepted, and option will be
    updated.

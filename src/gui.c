@@ -110,7 +110,7 @@ static void Box(const char *title, int x, int y, int width, int height)
 
 
 static int DoList(const char *title, int no, const char * const list[],
-		  int *option, char *input, int display_only)
+		  int *option, char *input, int display_only, int inital_select)
 {
     static const int max=GFX_HEIGHT/8-8;
     SDL_Event *e;
@@ -133,8 +133,14 @@ static int DoList(const char *title, int no, const char * const list[],
     	*input = 0;
     }
 
-    top=0;
-    cur=0;
+    cur = (inital_select >=0 && inital_select < no) ? inital_select : 0;
+
+    top = 0;
+
+    if (cur > top + max - 2)
+    {
+	top = cur - max + 2;
+    }
 
     done=FALSE;
 
@@ -568,7 +574,13 @@ const char *GUIInputString(const char *prompt, const char *orig)
 
 int GUIListSelect(const char *title, int no, const char * const list[])
 {
-    return DoList(title, no,list, NULL, NULL, FALSE);
+    return DoList(title, no,list, NULL, NULL, FALSE, -1);
+}
+
+
+int GUIMenu(const char *title, int no, int selected, const char * const list[])
+{
+    return DoList(title, no, list, NULL, NULL, FALSE, selected);
 }
 
 
@@ -587,7 +599,7 @@ int GUIListOption(const char *title, int no,
     for(f=0;f<no;f++)
     	o[f]=option[f];
 
-    sel=DoList(title, no, list, o, NULL, FALSE);
+    sel=DoList(title, no, list, o, NULL, FALSE, -1);
 
     if (sel!=-1)
     	for(f=0;f<no;f++)
@@ -601,7 +613,7 @@ int GUIListOption(const char *title, int no,
 
 void GUIDisplayList(const char *title, int no, const char * const list[])
 {
-    DoList(title, no, list, NULL, NULL, TRUE);
+    DoList(title, no, list, NULL, NULL, TRUE, -1);
 }
 
 
@@ -688,7 +700,7 @@ int GUIFileSelect(const char *prompt, int load,
 	}
 
 	sel=DoList(pwd, no, GUI_LIST_CAST(list), NULL,
-		   load ? NULL:input, FALSE);
+		   load ? NULL:input, FALSE, -1);
 
 	if (sel == -1)
 	{
