@@ -28,7 +28,7 @@
 
 #include <SDL.h>
 
-/* Buttons.  Supports up to 4 buttons so that it still fits in a byte.
+/* Buttons
 */
 typedef enum
 {
