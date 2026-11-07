@@ -110,9 +110,8 @@ static void CheckJoystick(SDL_Event *e)
 {
     switch (e->type)
     {
-	case SDL_JOYAXISMOTION:
-	case SDL_JOYBUTTONDOWN:
-	case SDL_JOYBUTTONUP:
+	case SDL_CONTROLLERBUTTONDOWN:
+	case SDL_CONTROLLERBUTTONUP:
 	    JOYPump(e);
 	    break;
 
@@ -148,7 +147,7 @@ void GFXInit(void)
 
     if (IConfig(CONF_JOYSTICK))
     {
-	flags |= SDL_INIT_JOYSTICK;
+	flags |= SDL_INIT_GAMECONTROLLER;
     }
 
     if (SDL_Init(flags))

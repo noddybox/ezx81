@@ -108,10 +108,12 @@ static Joykey		joystick[JOY_NumButtons] =
     {3, 1 << 4},		/* JOY_Left */
     {4, 1 << 3},		/* JOY_Up */
     {4, 1 << 4},		/* JOY_Down */
-    {4, 1 << 0},		/* JOY_Button1 */
-    {4, 1 << 0},		/* JOY_Button2 */
-    {4, 1 << 0},		/* JOY_Button3 */
-    {4, 1 << 0}			/* JOY_Button4 */
+    {4, 1 << 0},		/* JOY_Button_X */
+    {4, 1 << 0},		/* JOY_Button_Y */
+    {4, 1 << 0},		/* JOY_Button_A */
+    {4, 1 << 0},		/* JOY_Button_B */
+    {4, 1 << 0},		/* JOY_Right_Shoulder */
+    {4, 1 << 0},		/* JOY_Left_Shoulder */
 };
 
 static int		defining_joykeys = FALSE;
@@ -847,10 +849,12 @@ static const char *LastJoystick(void)
     	"Left",
     	"Up",
     	"Down",
-    	"Button 1",
-    	"Button 2",
-    	"Button 3",
-    	"Button 4",
+    	"X",
+    	"Y",
+    	"A",
+    	"B",
+    	"Right Shoulder",
+    	"Left Shoulder",
     };
 
     return name[last_joystick];
@@ -1144,12 +1148,16 @@ void ZX81SetupJoystick(void)
     Uint32 green;
     int f;
 
+    if (!JOYConnected())
+    {
+	GUIMessage(eMessageBox, "ERROR","No joystick connected");
+	return;
+    }
+
     white = GFXRGB(255, 255, 255);
     black = GFXRGB(0, 0, 0);
     red = GFXRGB(255, 0, 0);
     green = GFXRGB(0, 255, 0);
-
-    ClearKeys();
 
     defining_joykeys = TRUE;
 

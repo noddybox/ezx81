@@ -36,10 +36,12 @@ typedef enum
     JOY_Left,
     JOY_Up,
     JOY_Down,
-    JOY_Button1,
-    JOY_Button2,
-    JOY_Button3,
-    JOY_Button4,
+    JOY_Button_X,
+    JOY_Button_Y,
+    JOY_Button_A,
+    JOY_Button_B,
+    JOY_Right_Shoulder,
+    JOY_Left_Shoulder,
     JOY_NumButtons
 } JoystickButton;
 
@@ -67,6 +69,10 @@ int		JOYState(JoystickButton button);
 /* Register a callback for joystick events
 */
 void		JOYRegister(JoystickCallback callback);
+
+/* Is a joystick connected
+*/
+int		JOYConnected(void);
 
 
 #endif

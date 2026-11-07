@@ -29,12 +29,41 @@
 
 /* ---------------------------------------- STATICS
 */
-static SDL_Joystick	*joystick;
-static JoystickCallback	registered_callback;
-static int		state[JOY_NumButtons];
+static SDL_GameController	*joystick = NULL;
+static JoystickCallback		registered_callback;
+static int			state[JOY_NumButtons];
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static JoystickButton MapButton(SDL_GameControllerButton button)
+{
+    switch(button)
+    {
+	case SDL_CONTROLLER_BUTTON_DPAD_UP:
+	    return JOY_Up;
+	case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+	    return JOY_Down;
+	case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+	    return JOY_Left;
+	case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+	    return JOY_Right;
+	case SDL_CONTROLLER_BUTTON_A:
+	    return JOY_Button_A;
+	case SDL_CONTROLLER_BUTTON_B:
+	    return JOY_Button_B;
+	case SDL_CONTROLLER_BUTTON_X:
+	    return JOY_Button_X;
+	case SDL_CONTROLLER_BUTTON_Y:
+	    return JOY_Button_Y;
+	case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+	    return JOY_Left_Shoulder;
+	case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+	    return JOY_Right_Shoulder;
+    	default:
+	    return JOY_NumButtons;
+    }
+}
+
 static void ButtonPress(JoystickButton button, int pressed)
 {
     state[button] = pressed;
@@ -51,18 +80,19 @@ void JOYInit(void)
 {
     int num;
 
-    SDL_JoystickEventState(SDL_ENABLE);
+    SDL_GameControllerEventState(SDL_ENABLE);
 
     num = SDL_NumJoysticks();
 
     if (num > 0)
     {
-	joystick = SDL_JoystickOpen(0);
+	joystick = SDL_GameControllerOpen(0);
     }
 }
 
 void JOYSelect(void)
 {
+    const char *not_contoller = "Not a game controller";
     int num;
     char **list;
     int select;
@@ -83,11 +113,18 @@ void JOYSelect(void)
 
     	list[f] = Malloc(80);
 
-	name = SDL_JoystickNameForIndex(f);
-
-	if (!name)
+	if (SDL_IsGameController(f))
 	{
-	    name = "Unknown";
+	    name = SDL_GameControllerNameForIndex(f);
+
+	    if (!name)
+	    {
+		name = "Unknown";
+	    }
+	}
+	else
+	{
+	    name = not_contoller;
 	}
 
 	sprintf(list[f], "%-32.32s", name);
@@ -95,18 +132,18 @@ void JOYSelect(void)
 
     select = GUIListSelect("SELECT A JOYSTICK", num, GUI_LIST_CAST(list));
 
-    if (select == -1)
+    if (select == -1 || Compare(list[select], not_contoller))
     {
     	return;
     }
 
     if (joystick)
     {
-    	SDL_JoystickClose(joystick);
+    	SDL_GameControllerClose(joystick);
 	joystick = NULL;
     }
 
-    joystick = SDL_JoystickOpen(select);
+    joystick = SDL_GameControllerOpen(select);
 
     if (!joystick)
     {
@@ -118,58 +155,17 @@ void JOYSelect(void)
 
 void JOYPump(SDL_Event *e)
 {
+    JoystickButton button;
+
     switch (e->type)
     {
-	case SDL_JOYAXISMOTION:
-	    if (e->jaxis.axis == 0)
-	    {
-		if (e->jaxis.value < -1000)
-		{
-		    ButtonPress(JOY_Left, TRUE);
-		    ButtonPress(JOY_Right, FALSE);
-		}
-		else if (e->jaxis.value > 1000)
-		{
-		    ButtonPress(JOY_Left, FALSE);
-		    ButtonPress(JOY_Right, TRUE);
-		}
-		else
-		{
-		    ButtonPress(JOY_Left, FALSE);
-		    ButtonPress(JOY_Right, FALSE);
-		}
-	    }
-	    else if (e->jaxis.axis == 1)
-	    {
-		if (e->jaxis.value < -1000)
-		{
-		    ButtonPress(JOY_Up, TRUE);
-		    ButtonPress(JOY_Down, FALSE);
-		}
-		else if (e->jaxis.value > 1000)
-		{
-		    ButtonPress(JOY_Up, FALSE);
-		    ButtonPress(JOY_Down, TRUE);
-		}
-		else
-		{
-		    ButtonPress(JOY_Up, FALSE);
-		    ButtonPress(JOY_Down, FALSE);
-		}
-	    }
-	    break;
+	case SDL_CONTROLLERBUTTONDOWN:
+	case SDL_CONTROLLERBUTTONUP:
+	    button = MapButton(e->cbutton.button);
 
-	case SDL_JOYBUTTONDOWN:
-	    if (e->jbutton.button < 5)
+	    if (button != JOY_NumButtons)
 	    {
-	    	ButtonPress(JOY_Button1 + e->jbutton.button, TRUE);
-	    }
-	    break;
-
-	case SDL_JOYBUTTONUP:
-	    if (e->jbutton.button < 5)
-	    {
-	    	ButtonPress(JOY_Button1 + e->jbutton.button, FALSE);
+	    	ButtonPress(button, e->cbutton.state == SDL_PRESSED);
 	    }
 	    break;
 
@@ -187,4 +183,9 @@ int JOYState(JoystickButton button)
 void JOYRegister(JoystickCallback callback)
 {
     registered_callback = callback;
+}
+
+int JOYConnected(void)
+{
+    return joystick != NULL;
 }
