@@ -45,6 +45,8 @@ F8 - Save joystick to key mappings.
 
 F9 - Load joystick to key mappings.
 
+F10 - Display joystick to key mappings.
+
 F11 - Display the Memory Menu.
 
 F12 - Display an overlay of the current state of the Z80 CPU while the system
