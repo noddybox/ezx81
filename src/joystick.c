@@ -176,6 +176,30 @@ void JOYPump(SDL_Event *e)
 	    }
 	    break;
 
+	case SDL_CONTROLLERDEVICEADDED:
+	    if (!joystick)
+	    {
+		if (SDL_IsGameController(e->cdevice.which))
+		{
+		    joystick = SDL_GameControllerOpen(e->cdevice.which);
+
+		    if (joystick)
+		    {
+			GUIToast("Attached inserted joystick");
+		    }
+		}
+	    }
+	    break;
+
+	case SDL_CONTROLLERDEVICEREMOVED:
+	    if (joystick)
+	    {
+		SDL_GameControllerClose(joystick);
+		joystick = NULL;
+		GUIToast("Joystick removed");
+	    }
+	    break;
+
 	default:
 	    break;
     }

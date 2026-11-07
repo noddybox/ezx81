@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
     BMPInit();
 
     GFXInit();
+    GUIInit();
 
     if (IConfig(CONF_JOYSTICK))
     {

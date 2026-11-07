@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <dirent.h>
@@ -66,13 +67,74 @@ typedef struct
     int		is_dir;
 } FileEnt;
 
+typedef struct toast_struct
+{
+    time_t		display_till;
+    char		*message;
+    struct toast_struct	*next;
+    struct toast_struct	*prev;
+} Toast;
+
 
 /* ---------------------------------------- STATICS
 */
 
+static Toast	*toast = NULL;
+
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
 */
+static void DrawToast(const char *message, int y)
+{
+    int w = strlen(message) * 8 + 4;
+
+    GFXRect(GFX_WIDTH - w, y, w, 10, BLACK, TRUE);
+    GFXRect(GFX_WIDTH - w, y, w, 10, GREEN, FALSE);
+    GFXPrint(GFX_WIDTH - w + 2, y, WHITE, "%s", message);
+}
+
+static void HandleToast(void)
+{
+    Toast *t = toast;
+    int y = GFX_HEIGHT - 10;
+    time_t now = time(NULL);
+
+    while(t)
+    {
+    	if (t->display_till < now)
+	{
+	    Toast *n = t->next;
+
+	    if (t->prev)
+	    {
+		t->prev->next = t->next;
+	    }
+	    
+	    if (t->next)
+	    {
+	    	t->next->prev = t->prev;
+	    }
+
+	    if (toast == t)
+	    {
+	    	toast = t->next;
+	    }
+
+	    free(t->message);
+	    free(t);
+
+	    t = n;
+	}
+	else
+	{
+	    DrawToast(t->message, y);
+	    y -= 12;
+	    t = t->next;
+	}
+    }
+}
+
+
 static void Trim(char *p,size_t len)
 {
     if (strlen(p)>len)
@@ -401,6 +463,12 @@ static int CmpFile(const void *va,const void *vb)
 
 /* ---------------------------------------- EXPORTED INTERFACES
 */
+void GUIInit(void)
+{
+    GFXRegisterRedrawCallback(HandleToast);
+}
+
+
 int GUIMessage(GUIBoxType type, const char *title, const char *format,...)
 {
     char buff[1025];
@@ -760,4 +828,26 @@ int GUIFileSelect(const char *prompt, int load,
     GFXSetTextInput(state);
 
     return ret;
+}
+
+
+int GUIToast(const char *message)
+{
+    Toast *new = Malloc(sizeof *new);
+
+    new->prev = NULL;
+    new->next = toast;
+
+    if (new->next)
+    {
+	new->next->prev = new;
+    }
+
+    new->display_till = time(NULL) + 4;
+    new->message = StrCopy(message);
+    toast = new;
+
+    /* Force a redraw so that the toast appears, even during a keypress wait
+    */
+    GFXEndFrame(FALSE);
 }

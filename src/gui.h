@@ -43,6 +43,10 @@
 */
 typedef enum {eMessageBox, eYesNoBox} GUIBoxType;
 
+/* Call to do any initialisation.  Should be called after GFXInit()
+*/
+void		GUIInit(void);
+
 /* Display a simple message box.  A message of longer than 1024 bytes causes
    undefined behaviour.  Newlines cause a line break.  If a line is over 38
    characters then it will be truncated.
@@ -120,6 +124,10 @@ int		GUIFileSelect(const char *prompt,
 			      const char *start_dir,
 			      char path[],
 			      const char *extension);
+
+/* Display a simple one-line message that will disappear after a few seconds
+*/
+int		GUIToast(const char *message);
 
 
 #endif

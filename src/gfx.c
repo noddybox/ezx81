@@ -68,6 +68,8 @@ static struct
     {0,     0x60,0x60,0x60},        /* GREY */
 };
 
+static RedrawCallback	*redraw_callback;
+static int		num_redraw_callback;
 
 
 /* ---------------------------------------- PRIVATE FUNCTIONS
@@ -110,6 +112,8 @@ static void CheckJoystick(SDL_Event *e)
 {
     switch (e->type)
     {
+	case SDL_CONTROLLERDEVICEADDED:
+	case SDL_CONTROLLERDEVICEREMOVED:
 	case SDL_CONTROLLERBUTTONDOWN:
 	case SDL_CONTROLLERBUTTONUP:
 	    JOYPump(e);
@@ -214,6 +218,11 @@ void GFXStartFrame(void)
 
 void GFXEndFrame(int delay)
 {
+    for (int f = 0; f < num_redraw_callback; f++)
+    {
+    	redraw_callback[f]();
+    }
+
     SDL_UpdateTexture(texture, NULL,
                       pixels, GFX_WIDTH * scale * sizeof(Uint32));
 
@@ -486,4 +495,13 @@ void GFXBitmap(const GFX_Bitmap *bitmap)
 	    putpixel(cx + x, cy + y,bmpix[GFX_BITMAP_AT(*bitmap, x, y)].col);
 	}
     }
+}
+
+
+void GFXRegisterRedrawCallback(RedrawCallback callback)
+{
+    num_redraw_callback++;
+
+    redraw_callback = Malloc(sizeof *redraw_callback * num_redraw_callback);
+    redraw_callback[num_redraw_callback - 1] = callback;
 }
