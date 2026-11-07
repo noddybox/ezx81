@@ -330,6 +330,24 @@ static const char *ConvertFilename(Z80Word addr)
 }
 
 
+static const char *JoystickMapping(JoystickButton button)
+{
+    const Joykey *joy = joystick + button;
+
+    int f;
+
+    for(f = 0; keymap[f].key != SDLK_UNKNOWN; f++)
+    {
+	if (keymap[f].m1 == joy->row && keymap[f].b1 == joy->bit &&
+	    keymap[f].display)
+	{
+	    return keymap[f].display;
+	}
+    }
+
+    return "Unknown!";
+}
+
 static void SaveJoystick(const char *path)
 {
     FILE *fp;
@@ -1262,4 +1280,30 @@ void ZX81LoadJoystick(void)
     {
 	LoadJoystick(joykey_file);
     }
+}
+
+
+void ZX81DisplayJoytick(void)
+{
+    char msg[1024] = {0};
+    JoystickButton button;
+
+    button = JOY_FIRST_BUTTON;
+
+    while (button <= JOY_LAST_BUTTON)
+    {
+    	char s[80];
+
+	snprintf(s, sizeof s, "%-15s: %-15s", JOYButtonName(button),
+					      JoystickMapping(button));
+
+	strcat(msg, s);
+
+	if (++button != JOY_NumButtons)
+	{
+	    strcat(msg, "\n");
+	}
+    }
+
+    GUIMessage(eMessageBox, "JOYSTICK MAPPINGS", "%s", msg);
 }

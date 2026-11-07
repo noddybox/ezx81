@@ -32,18 +32,22 @@
 */
 typedef enum
 {
-    JOY_Right,
     JOY_Left,
+    JOY_Right,
     JOY_Up,
     JOY_Down,
     JOY_Button_X,
     JOY_Button_Y,
     JOY_Button_A,
     JOY_Button_B,
-    JOY_Right_Shoulder,
     JOY_Left_Shoulder,
+    JOY_Right_Shoulder,
     JOY_NumButtons
 } JoystickButton;
+
+#define JOY_FIRST_BUTTON	(JOY_Left)
+#define JOY_LAST_BUTTON		(JOY_Right_Shoulder)
+
 
 /* Callback for joystick events
 */
@@ -73,6 +77,10 @@ void		JOYRegister(JoystickCallback callback);
 /* Is a joystick connected
 */
 int		JOYConnected(void);
+
+/* Get a prinable string for a button
+*/
+const char	*JOYButtonName(JoystickButton button);
 
 
 #endif

@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
 				   "F7  - Define Joytick Key Mapping  \n"
 				   "F8  - Save Joytick Mapping        \n"
 				   "F9  - Load Joytick Mapping        \n"
+				   "F10 - Display Joystick Mappings   \n"
 				   "F11 - Memory Menu                 \n"
 				   "F12 - Toggle onscreen trace       ");
 		break;
@@ -186,6 +187,10 @@ int main(int argc, char *argv[])
 
 		case SDLK_F9:
 		    ZX81LoadJoystick();
+		    break;
+
+		case SDLK_F10:
+		    ZX81DisplayJoytick();
 		    break;
 
 	    	case SDLK_ESCAPE:

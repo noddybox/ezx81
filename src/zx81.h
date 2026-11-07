@@ -60,6 +60,7 @@ void		ZX81Reset(Z80 *z80);
 void	ZX81SetupJoystick(void);
 void	ZX81SaveJoystick(void);
 void	ZX81LoadJoystick(void);
+void	ZX81DisplayJoytick(void);
 
 
 #endif

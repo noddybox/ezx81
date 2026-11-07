@@ -132,7 +132,14 @@ void JOYSelect(void)
 
     select = GUIListSelect("SELECT A JOYSTICK", num, GUI_LIST_CAST(list));
 
-    if (select == -1 || Compare(list[select], not_contoller))
+    for(int f = 0; f < num; f++)
+    {
+    	free(list[f]);
+    }
+
+    free(list);
+
+    if (select == -1 || !SDL_IsGameController(select))
     {
     	return;
     }
@@ -188,4 +195,23 @@ void JOYRegister(JoystickCallback callback)
 int JOYConnected(void)
 {
     return joystick != NULL;
+}
+
+const char *JOYButtonName(JoystickButton button)
+{
+    static const char *name[] =
+    {
+    	"Left",
+    	"Right",
+    	"Up",
+    	"Down",
+    	"X",
+    	"Y",
+    	"A",
+    	"B",
+    	"Left Shoulder",
+    	"Right Shoulder",
+    };
+
+    return name[button];
 }
