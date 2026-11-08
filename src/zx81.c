@@ -699,8 +699,8 @@ static void DrawScreenHires(Z80State *state, Z80Word hires_dfile)
     GFXClear(white);
 
     table = state->I << 8;
-    scr = mem + PEEKW(DFILE);
-    // scr = mem + hires_dfile;
+    // scr = mem + PEEKW(DFILE);
+    scr = mem + hires_dfile;
 
     for(y = 0; y < SCR_H; y++)
     {
@@ -721,6 +721,8 @@ static void DrawScreenHires(Z80State *state, Z80Word hires_dfile)
 		v = v << 1;
 	    }
 	}
+
+	scr++;
     }
 
     GFXEndFrame(TRUE);
@@ -1088,6 +1090,11 @@ const Z80Label *ZX81GetLabels(void)
     	{
 	    {ROM_SAVE,	"SAVE"},
 	    {ROM_LOAD,	"LOAD"},
+	    {0x0918,	"PRINT-CHAR"},
+	    {0x0a2a,	"CLS"},
+	    {0x02bb,	"DISPLAY-5"},
+	    {0x0340,	"SLOW"},
+	    {0x0420,	"FAST"},
 	    {16384,	"ERR_NR"},
 	    {16385,	"FLAGS"},
 	    {16386,	"ERR_SP"},

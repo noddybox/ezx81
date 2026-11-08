@@ -584,10 +584,13 @@ const char *GUIInputString(const char *prompt, const char *orig)
     int done=FALSE;
     unsigned char c;
     SDL_Event *e;
+    int state;
 
     buff[0]=0;
     strncat(buff,orig,40);
     len=strlen(buff);
+
+    state = GFXSetTextInput(TRUE);
 
     while(!done)
     {
@@ -635,6 +638,8 @@ const char *GUIInputString(const char *prompt, const char *orig)
 	    }
 	}
     }
+
+    GFXSetTextInput(state);
 
     return buff;
 }
