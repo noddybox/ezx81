@@ -1090,9 +1090,9 @@ const Z80Label *ZX81GetLabels(void)
     	{
 	    {ROM_SAVE,	"SAVE"},
 	    {ROM_LOAD,	"LOAD"},
-	    {0x0918,	"PRINT-CHAR"},
+	    {0x0918,	"PRINT_CHAR"},
 	    {0x0a2a,	"CLS"},
-	    {0x02bb,	"DISPLAY-5"},
+	    {0x02bb,	"DISPLAY_5"},
 	    {0x0340,	"SLOW"},
 	    {0x0420,	"FAST"},
 	    {16384,	"ERR_NR"},
