@@ -299,6 +299,13 @@ static int DoList(const char *title, int no, const char * const list[],
 			if (cur<top)
 			    top=cur;
 		    }
+		    else
+		    {
+		    	cur = no - 1;
+
+			if (cur>top+max-2)
+			    top=cur-max+2;
+		    }
 		    break;
 
 		case SDLK_DOWN:
@@ -308,6 +315,11 @@ static int DoList(const char *title, int no, const char * const list[],
 
 			if (cur>top+max-2)
 			    top=cur-max+2;
+		    }
+		    else
+		    {
+		    	cur = 0;
+			top = 0;
 		    }
 		    break;
 
