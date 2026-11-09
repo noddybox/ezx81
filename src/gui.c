@@ -848,7 +848,7 @@ int GUIFileSelect(const char *prompt, int load,
 }
 
 
-int GUIToast(const char *message)
+void GUIToast(const char *message)
 {
     Toast *new = Malloc(sizeof *new);
 

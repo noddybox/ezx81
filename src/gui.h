@@ -127,7 +127,7 @@ int		GUIFileSelect(const char *prompt,
 
 /* Display a simple one-line message that will disappear after a few seconds
 */
-int		GUIToast(const char *message);
+void		GUIToast(const char *message);
 
 
 #endif
