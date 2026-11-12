@@ -2,7 +2,7 @@
 
     z80 - Z80 Emulator
 
-    Copyright (C) 2006  Ian Cowburn <ianc@noddybox.co.uk>
+    Copyright (C) 2006  Ian Cowburn <deathstation9000@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

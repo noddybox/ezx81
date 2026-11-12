@@ -2,7 +2,7 @@
 
     z80 - Z80 Emulator
 
-    Copyright (C) 2006  Ian Cowburn <ianc@noddybox.co.uk>
+    Copyright (C) 2006  Ian Cowburn <deathstation9000@gmail.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ static void InitTables()
 static int Z80_CheckInterrupt(Z80 *cpu)
 {
     Z80Word vector;
-    int raise = cpu->raise;
+    int raise = FALSE;
 
     /* Check interrupts
     */
@@ -64,10 +64,12 @@ static int Z80_CheckInterrupt(Z80 *cpu)
 	    }
 
 	    TSTATE(2);
+	    cpu->IFF2=cpu->IFF1;
 	    cpu->IFF1=0;
 	    cpu->nmi=FALSE;
 	    PUSH(cpu->PC);
 	    cpu->PC=0x66;
+	    raise = TRUE;
 	}
     	else if (cpu->IFF1)
 	{
@@ -100,6 +102,10 @@ static int Z80_CheckInterrupt(Z80 *cpu)
                     cpu->PC=PEEKW(vector);
 		    break;
 	    }
+
+	    cpu->IFF1=0;
+
+	    raise = TRUE;
 	}
 
 	cpu->raise=FALSE;
