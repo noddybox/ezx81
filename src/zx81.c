@@ -572,7 +572,7 @@ static void VideoHsync(Z80 *z80)
 	VideoFalseVsync(z80);
     }
 
-    Debug("In HSYNC (y = %d)\n", video.y);
+    Debug("In HSYNC (y = %d, row = %d)\n", video.y, video.row);
 }
 
 
@@ -890,7 +890,7 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 
     started = TRUE;
 
-    if (port & 0x01)
+    if ((port & 0x01) == 0x00)
     {
 	/* Start vsync
 	*/
@@ -970,6 +970,10 @@ const Z80Label *ZX81GetLabels(void)
 	    {ROM_LOAD,	"LOAD"},
 	    {0x0918,	"PRINT_CHAR"},
 	    {0x0a2a,	"CLS"},
+	    {0x0207,	"SLOW_FAST"},
+	    {0x0229,	"DISPLAY_1"},
+	    {0x023e,	"DISPLAY_2"},
+	    {0x0292,	"DISPLAY_3"},
 	    {0x02bb,	"DISPLAY_5"},
 	    {0x0340,	"SLOW"},
 	    {0x0420,	"FAST"},
