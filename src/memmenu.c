@@ -205,7 +205,7 @@ static int Expand(void *client, const char *p, long *res)
 	*res=state.IFF1;
     else if (StrEq(p,"IFF2"))
 	*res=state.IFF2;
-    else if (*p == '!')
+    else if (*p == '#')
     {
 	long n;
 

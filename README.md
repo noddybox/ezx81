@@ -92,8 +92,8 @@ register names and can use different bases.  For instance `pc` will enter the
 address as the current contents of the Program Counter.  By default numbers
 are decimal.  To use hex number prefix the value with `0x`.
 
-If the value is prefixed with '!' then the byte at the specified address is
-read and used.  If the value is prefixed with '@' then the word at the
+If the value is prefixed with `#` then the byte at the specified address is
+read and used.  If the value is prefixed with `@` then the word at the
 specified address is read and used.
 
 ### Main Menu
@@ -124,9 +124,18 @@ will be memory as it is NOW rather than at the time of the trace.
 
 #### 5 - Add a new breakpoint
 
-Allows you to enter an address or an expression (e.g. `hl==0x1234`) which when
-the PC hits that address or the expression is true the emulation will be
-paused and the memory menu entered.
+Allows you to enter an expression which will cause a breakpoint to be trigger.
+There are two modes.
+
+If the expression has an == check in it then the breakpoint
+will be triggered if the expression evaluates true, e.g. `hl==0x1234` will stop
+if the HL register pair holds the value 0x1234.
+
+If there is no equality check then the value is taken as a value to stop at
+when the Program Counter equals that value.
+
+Note that the `#` and `@` can be used for breakpoints, so `#0x1234==1` would
+work.
 
 #### 6 - Set active breakpoints
 
