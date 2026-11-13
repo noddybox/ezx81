@@ -75,6 +75,11 @@ typedef void (*RedrawCallback)(void);
 void		GFXInit(void);
 
 
+/* Stop
+*/
+void		GFXClose(void);
+
+
 /* Get the pixel value for a colour
 */
 Uint32		GFXRGB(Uint8 r, Uint8 g, Uint8 b);

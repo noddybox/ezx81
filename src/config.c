@@ -33,8 +33,8 @@
 
 /* ---------------------------------------- CONFIG
 */
-static char	rompath[FILENAME_MAX]="./zx81.rom";
-static char	tapedir[FILENAME_MAX]=".";
+static char	rompath[MAX_PATH_BUFF]="./zx81.rom";
+static char	tapedir[MAX_PATH_BUFF]=".";
 static int	fullscreen=FALSE;
 static int	memsize=16;
 static int	frames=50;
@@ -124,7 +124,7 @@ static void Parse(FILE *fp)
 void ConfigRead(void)
 {
     FILE *fp;
-    char path[FILENAME_MAX]={0};
+    char path[MAX_PATH_BUFF]={0};
 
     if (getenv("HOME"))
     	strcpy(path,getenv("HOME"));

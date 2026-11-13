@@ -90,6 +90,11 @@ int main(int argc, char *argv[])
     grey=GFXRGB(128,128,128);
     black=GFXRGB(0,0,0);
 
+    /* Force a redraw to display the window
+    */
+    GFXClear(white);
+    GFXEndFrame(FALSE);
+
     quit=FALSE;
 
     /* Check for initial memory menu usage
@@ -216,7 +221,7 @@ int main(int argc, char *argv[])
 	}
     }
 
-    SDL_Quit();
+    GFXClose();
 
     return EXIT_SUCCESS;
 }

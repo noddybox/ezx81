@@ -1,4 +1,5 @@
 ezx81
 *.o
+*.brk
 depend.mak
 core

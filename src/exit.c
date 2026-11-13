@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include "exit.h"
 
-#include <SDL.h>
+#include "gfx.h"
 
 
 /* ---------------------------------------- EXPORTED INTERFACES
@@ -36,10 +36,7 @@ void Exit(const char *format,...)
 {
     va_list va;
 
-    if (SDL_WasInit(SDL_INIT_EVERYTHING))
-    {
-    	SDL_Quit();
-    }
+    GFXClose();
 
     va_start(va,format);
     vfprintf(stderr,format,va);

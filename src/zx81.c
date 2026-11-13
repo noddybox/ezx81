@@ -48,7 +48,7 @@
 #define ED_ENDWAITKEY	0xf3
 #define ED_PAUSE	0xf4
 
-#define SLOW_TSTATES	16000
+#define HSYNC_TSTATES	207
 #define FAST_TSTATES	(64000*10)
 
 #define E_LINE		16404
@@ -59,7 +59,7 @@
 #define CDFLAG		16443
 #define DFILE           0x400c
 
-static Z80Val		FRAME_TSTATES = FAST_TSTATES;
+#define YESNO(x)	((x) ? 'Y':'N')
 
 /* The ZX81 screen and emulation
 */
@@ -69,6 +69,8 @@ static int		scr_enable=TRUE;
 #define	SCR_H		192
 #define	TXT_W		32
 #define	TXT_H		24
+#define PAL_SCANLINE	310
+#define NTSC_SCANLINE	262
 
 #define OFF_X		(GFX_WIDTH-SCR_W)/2
 #define OFF_Y		(GFX_HEIGHT-SCR_H)/2
@@ -79,6 +81,17 @@ static int		started=FALSE;
 static int		last_I;
 
 static int              fast_mode=FALSE;
+
+static int		nmi_generator = FALSE;
+
+static struct
+{
+    int		x;
+    int		y;
+    int		row;
+    int		used;
+    int		in_vsync;
+} video = {0};
 
 /* Memory
 */
@@ -117,7 +130,7 @@ static Joykey		joystick[JOY_NumButtons] =
 };
 
 static int		defining_joykeys = FALSE;
-static char 		joykey_file[FILENAME_MAX];
+static char 		joykey_file[MAX_PATH_BUFF];
 static const char	*joyfile_ext = "joy81";
 static JoystickButton	last_joystick;
 
@@ -235,43 +248,8 @@ static void RomPatch(void)
 	0xff			/* End of patch		*/
     };
 
-    static const Z80Byte fast_hack[]=
-    {
-	0xed, ED_WAITKEY,	/* (START KEY WAIT)	*/
-	0xcb,0x46,		/* L: bit 0,(hl)	*/
-	0x28,0xfc,		/* jr z,L		*/
-	0xed, ED_ENDWAITKEY,	/* (END KEY WAIT)	*/
-    	0x00,			/* nop			*/
-	0xff			/* End of patch		*/
-    };
-
-    static const Z80Byte kbd_hack[]=
-    {
-	0x2a,0x25,0x40,		/* ld hl,(LASTK)	*/
-	0xc9,			/* ret			*/
-	0xff			/* End of patch		*/
-    };
-
-    static const Z80Byte pause_hack[]=
-    {
-	0xed, ED_PAUSE,		/* (PAUSE)		*/
-    	0x00,			/* nop			*/
-	0xff			/* End of patch		*/
-    };
-
     InstallRomPatch(ROM_SAVE, save);
     InstallRomPatch(ROM_LOAD, load);
-    InstallRomPatch(0x4ca, fast_hack);
-    InstallRomPatch(0x2bb, kbd_hack);
-    InstallRomPatch(0xf3a, pause_hack);
-
-    mem[0x21c]=0x00;
-    mem[0x21d]=0x00;
-
-    /* Remove HALTs as we don't do interrupts
-    */
-    mem[0x0079]=0;
-    mem[0x02ec]=0;
 }
 
 
@@ -306,7 +284,7 @@ static void ClearKeys(void)
 
 static const char *ConvertFilename(Z80Word addr)
 {
-    static char buff[FILENAME_MAX];
+    static char buff[MAX_PATH_BUFF];
     char *p;
 
     p=buff;
@@ -398,7 +376,7 @@ static void LoadTape(Z80 *cpu)
 {
     Z80State state;
     const char *p;
-    char path[FILENAME_MAX];
+    char path[MAX_PATH_BUFF];
     FILE *fp;
     Z80Word addr;
     int c;
@@ -410,7 +388,7 @@ static void LoadTape(Z80 *cpu)
 
     if (strlen(p)==0)
     {
-	static char selected_file[FILENAME_MAX];
+	static char selected_file[MAX_PATH_BUFF];
 
 	/* Clear the keys as otherwise the ENTER up is consumed
 	   by the GUI and the ZX81 thinks the ENTER key is being
@@ -469,7 +447,7 @@ static void SaveTape(Z80 *cpu)
 {
     Z80State state;
     const char *p;
-    char path[FILENAME_MAX];
+    char path[MAX_PATH_BUFF];
     FILE *fp;
     Z80Word start;
     Z80Word end;
@@ -505,235 +483,10 @@ static void SaveTape(Z80 *cpu)
 }
 
 
-static Z80Word FindHiresDFILE(void)
-{
-    /* Somewhat based on the code from xz81, an X-based ZX81 emulator,
-       (C) 1994 Ian Collier.  Search the ZX81's RAM until we find what looks
-       like a hi-res display file.
-
-       Bizarrely the original code used 'f' for a loop counter too...  Another
-       poor soul forever damaged by the ZX81's keyword entry system...
-    */
-    int f;
-
-    for(f=0x8000-(33*192); f>0x4000 ; f--)
-    {
-	int v;
-
-	v = mem[f+32];
-
-	if (v&0x40)
-	{
-	    int ok = TRUE;
-	    int n;
-
-	    for(n=0;n<192 && ok;n++)
-	    {
-	    	if (mem[f+33*n]&0x40)
-		{
-		    ok = FALSE;
-		}
-
-		if (mem[f+32+33*n] != v)
-		{
-		    ok = FALSE;
-		}
-	    }
-
-	    if (ok)
-	    {
-	    	return f;
-	    }
-	}
-    }
-
-    /* All else fails, put the hires dfile at 0x4000 -- at least it should be
-       obvious that the hires won't work for whatever is being run.
-    */
-    return 0x4000;
-}
-
-
-/* Perform ZX81 housekeeping functions like updating FRAMES and updating LASTK
-*/
-static void ZX81HouseKeeping(Z80 *z80)
-{
-    unsigned row;
-    unsigned lastk1;
-    unsigned lastk2;
-
-    /* British ZX81
-    */
-    mem[MARGIN] = 55;
-
-    /* Update FRAMES
-    */
-    if (FRAME_TSTATES == SLOW_TSTATES)
-    {
-    	Z80Word frame = PEEKW(FRAMES) & 0x7fff;
-
-	if (frame)
-	{
-	    frame--;
-	}
-
-	POKEW(FRAMES,frame|0x8000);
-    }
-
-    if (!started)
-    {
-    	prev_lk1 = 0;
-    	prev_lk2 = 0;
-	return;
-    }
-
-    /* Update LASTK
-    */
-    lastk1 = 0;
-    lastk2 = 0;
-
-    for(row = 0; row < 8; row++)
-    {
-    	unsigned b;
-
-	b = (~matrix[row]&0x1f)<<1;
-
-	if (row == 0)
-	{
-	    unsigned shift;
-
-	    shift=b&2;
-	    b&=~2;
-	    b|=(shift>>1);
-	}
-
-	if (b)
-	{
-	    if (b>1)
-	    {
-		lastk1|=(1<<row);
-	    }
-
-	    lastk2|=b;
-	}
-    }
-
-    if (lastk1 && (lastk1 != prev_lk1 || lastk2 != prev_lk2))
-    {
-    	mem[CDFLAG]|=1;
-    }
-    else
-    {
-    	mem[CDFLAG]&=~1;
-    }
-
-    mem[LASTK1] = lastk1^0xff;
-    mem[LASTK2] = lastk2^0xff;
-
-    prev_lk1 = lastk1;
-    prev_lk2 = lastk2;
-}
-
-
-static void DrawScreenText(Z80State *state)
-{
-    int x,y;
-    int table;
-    Z80Byte *scr;
-
-    GFXStartFrame();
-    GFXClear(white);
-
-    table = state->I << 8;
-    scr = mem + PEEKW(DFILE);
-
-    y = 0;
-
-    while(y < TXT_H)
-    {
-	scr++;
-	x = 0;
-
-	/* 118 is the opcode for HALT
-	*/
-	while(*scr != 118 && x < TXT_W)
-	{
-	    int row;
-	    int c = *scr++;
-
-	    for(row = 0; row < 8; row++)
-	    {
-		int v = mem[table + (c & 0x3f) * 8 + row];
-		int b;
-
-		if (c & 0x80)
-		{
-		    v ^= 0xff;
-		}
-
-		for(b = 0; b < 8; b++)
-		{
-		    GFXPlot(OFF_X + x * 8 + b, OFF_Y + y * 8 + row,
-		    		(v & 0x80) ? black : white);
-		    v = v << 1;
-		}
-	    }
-
-	    x++;
-	}
-
-	y++;
-    }
-
-    GFXEndFrame(TRUE);
-}
-
-
-static void DrawScreenHires(Z80State *state, Z80Word hires_dfile)
-{
-    int x,y;
-    int table;
-    Z80Byte *scr;
-
-    GFXStartFrame();
-    GFXClear(white);
-
-    table = state->I << 8;
-    // scr = mem + PEEKW(DFILE);
-    scr = mem + hires_dfile;
-
-    for(y = 0; y < SCR_H; y++)
-    {
-	for(x = 0; x < SCR_W; x++)
-	{
-	    int c = *scr++;
-	    int v = mem[table + (c & 0x3f) * 8];
-	    int b;
-
-	    if (c & 0x80)
-	    {
-	    	v ^= 0xff;
-	    }
-
-	    for(b = 0; b < 8; b++)
-	    {
-	    	GFXPlot(OFF_X + x, OFF_Y + y, (v & 0x80) ? black : white);
-		v = v << 1;
-	    }
-	}
-
-	scr++;
-    }
-
-    GFXEndFrame(TRUE);
-}
-
-
 static void DrawSnow(void)
 {
-    int x,y;
-
-    GFXStartFrame();
+    int y;
+    int x;
 
     for(y = 0; y < GFX_HEIGHT; y++)
     {
@@ -742,65 +495,141 @@ static void DrawSnow(void)
 	    GFXPlot(x, y, rand() & 1 ? black : white);
 	}
     }
+}
+
+
+static void VideoStartVsync(Z80 *z80)
+{
+    Debug("In START VSYNC\n");
+    video.in_vsync = TRUE;
+}
+
+
+static void VideoEndVsync(Z80 *z80)
+{
+    Debug("In END VSYNC\n");
 
     GFXEndFrame(TRUE);
+    GFXStartFrame();
+    GFXClear(white);
+
+    video.x = 0;
+    video.y = 0;
+    video.row = 0;
+    video.used = FALSE;
+    video.in_vsync = FALSE;
+}
+
+
+static void VideoFalseVsync(Z80 *z80)
+{
+    Debug("In FALSE VSYNC\n");
+
+    DrawSnow();
+    GFXEndFrame(TRUE);
+    GFXStartFrame();
+    GFXClear(white);
+
+    video.x = 0;
+    video.y = 0;
+    video.row = 0;
+    video.used = FALSE;
+    video.in_vsync = FALSE;
+}
+
+
+static void VideoHsync(Z80 *z80)
+{
+    if (nmi_generator)
+    {
+	Debug("Triggering NMI\n");
+    	Z80NMI(z80);
+    }
+
+    if (video.row >= mem[MARGIN])
+    {
+	video.x = 0;
+	video.y++;
+    }
+
+    video.row++;
+
+    if (fast_mode && video.row == PAL_SCANLINE)
+    {
+	VideoFalseVsync(z80);
+    }
+
+    Debug("In HSYNC (y = %d)\n", video.y);
+}
+
+
+static void VideoShifter(Z80 *z80, Z80Byte chr)
+{
+    Z80State state;
+    int table;
+    int char_row;
+    int b;
+    int v;
+
+    Z80GetState(z80, &state);
+
+    table = state.I << 8;
+    char_row = (video.row - mem[MARGIN]) & 7;
+
+    v = mem[table + (chr & 0x3f) * 8 + char_row];
+
+    if (chr & 0x80)
+    {
+	v ^= 0xff;
+    }
+
+    for(b = 0; b < 8; b++)
+    {
+	GFXPlot(OFF_X + video.x++,
+		OFF_Y + video.y,
+		(v & 0x80) ? black : white);
+
+	v = v << 1;
+    }
+
+    video.used = TRUE;
 }
 
 
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
-    Z80Val current_frame_tstates = FRAME_TSTATES;
+    Z80State state;
 
-    if (val >= FRAME_TSTATES)
+    Z80GetState(z80, &state);
+
+    if (state.R & 0x20)
     {
-	Z80State state;
-	Z80Word hires_dfile = 0;
+    	Z80Interrupt(z80, 0);
+    }
 
-	Z80GetState(z80, &state);
-
-    	/* Check for hi-res modes
-	*/
-	if (state.I && state.I != last_I)
+    /* If we're in VSYNC keep resetting the cycle count until vsync ends
+    */
+    if (video.in_vsync)
+    {
+	Z80ResetCycles(z80, 0);
+    }
+    else
+    {
+	if (val >= HSYNC_TSTATES)
 	{
-	    last_I = state.I;
+	    VideoHsync(z80);
 
-	    if (state.I != 0x1e)
+	    if (started && (mem[CDFLAG] & 0x80))
 	    {
-		hires_dfile = FindHiresDFILE();
-	    }
-	}
-
-	if (started && ((mem[CDFLAG] & 0x80) || waitkey || hires_dfile))
-	{
-	    fast_mode = FALSE;
-	    FRAME_TSTATES=SLOW_TSTATES;
-
-	    if (hires_dfile)
-	    {
-		DrawScreenHires(&state, hires_dfile);
+		fast_mode = FALSE;
 	    }
 	    else
 	    {
-		DrawScreenText(&state);
+		fast_mode = TRUE;
 	    }
-	}
-	else
-	{
-            fast_mode = TRUE;
-	    FRAME_TSTATES=FAST_TSTATES;
-	    DrawSnow();
-	}
 
-	/* Update FRAMES (if in SLOW) and scan the keyboard.  This only happens
-	   once we've got to a decent point in the boot cycle (detected with
-	   a valid stack pointer).
-	*/
-	if (state.SP < 0x8000)
-	{
-	    ZX81HouseKeeping(z80);
+	    Z80ResetCycles(z80, val - HSYNC_TSTATES);
 	}
-
-	Z80ResetCycles(z80, val - current_frame_tstates);
     }
 
     return TRUE;
@@ -847,7 +676,7 @@ static int EDCallback(Z80 *z80, Z80Val data)
 		    ZX81KeyEvent(e);
 		}
 
-		CheckTimers(z80, FRAME_TSTATES);
+		CheckTimers(z80, 0);
 	    }
 
 	    waitkey = FALSE;
@@ -961,7 +790,7 @@ void ZX81Init(Z80 *z80)
     	mem[f]=0;
 
     for(f=0;f<8;f++)
-    	matrix[f]=0x1f;
+    	matrix[f]=0xff;
 
     white=GFXRGB(230,230,230);
     black=GFXRGB(0,0,0);
@@ -1011,7 +840,25 @@ void ZX81KeyEvent(SDL_Event *e)
 
 Z80Byte ZX81ReadMem(Z80 *z80, Z80Word addr)
 {
-    return mem[addr&0x7fff];
+    if (addr > 0x7fff)
+    {
+    	Z80Byte b = mem[addr & 0x7fff];
+
+	VideoShifter(z80, b & 0x20 ? 0 : b);
+
+	if (b & 0x20)
+	{
+	    return b;
+	}
+	else
+	{
+	    return 0;
+	}
+    }
+    else
+    {
+	return mem[addr];
+    }
 }
 
 
@@ -1028,44 +875,46 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 {
     Z80Byte b=0;
 
-    /* Debug("IN  %4.4x\n",port); */
+    started = TRUE;
 
-    switch(port&0xff)
+    if (port & 0x01)
     {
-    	case 0xfe:	/* ULA */
-	    /* Key matrix
-	    */
-	    switch(port&0xff00)
-	    {
-	    	case 0xfe00:
-		    b=matrix[0];
-		    break;
-	    	case 0xfd00:
-		    b=matrix[1];
-		    break;
-	    	case 0xfb00:
-		    b=matrix[2];
-		    break;
-	    	case 0xf700:
-		    b=matrix[3];
-		    break;
-	    	case 0xef00:
-		    b=matrix[4];
-		    break;
-	    	case 0xdf00:
-		    b=matrix[5];
-		    break;
-	    	case 0xbf00:
-		    b=matrix[6];
-		    break;
-	    	case 0x7f00:
-		    b=matrix[7];
-		    break;
-	    }
-	    break;
+	/* Start vsync
+	*/
+	if (!video.in_vsync)
+	{
+	    VideoStartVsync(z80);
+	}
 
-	default:
-	    break;
+	/* Key matrix
+	*/
+	switch(port&0xff00)
+	{
+	    case 0xfe00:
+		b=matrix[0];
+		break;
+	    case 0xfd00:
+		b=matrix[1];
+		break;
+	    case 0xfb00:
+		b=matrix[2];
+		break;
+	    case 0xf700:
+		b=matrix[3];
+		break;
+	    case 0xef00:
+		b=matrix[4];
+		break;
+	    case 0xdf00:
+		b=matrix[5];
+		break;
+	    case 0xbf00:
+		b=matrix[6];
+		break;
+	    case 0x7f00:
+		b=matrix[7];
+		break;
+	}
     }
 
     return b;
@@ -1074,7 +923,23 @@ Z80Byte ZX81ReadPort(Z80 *z80, Z80Word port)
 
 void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 {
-    /* Debug("OUT %4.4x,%2.2X\n",port,val); */
+    if ((port & 0x0003) == 0x0001)
+    {
+    	nmi_generator = FALSE;
+    	VideoEndVsync(z80);
+    }
+    else if ((port & 0x0001) == 0x0000)
+    {
+    	nmi_generator = TRUE;
+    	VideoEndVsync(z80);
+    }
+    else if ((port & 0x00ff) == 0x00ff)
+    {
+    	VideoEndVsync(z80);
+    }
+
+    Debug("NMI generator %c, IN_VSYNC %c\n", YESNO(nmi_generator),
+					     YESNO(video.in_vsync));
 }
 
 
@@ -1095,6 +960,7 @@ const Z80Label *ZX81GetLabels(void)
 	    {0x02bb,	"DISPLAY_5"},
 	    {0x0340,	"SLOW"},
 	    {0x0420,	"FAST"},
+	    {0x0043,	"WAIT_INT"},
 	    {16384,	"ERR_NR"},
 	    {16385,	"FLAGS"},
 	    {16386,	"ERR_SP"},
@@ -1141,6 +1007,9 @@ const Z80Label *ZX81GetLabels(void)
 const char *ZX81Info(Z80 *z80)
 {
     static char buff[80];
+
+    snprintf(buff, sizeof buff, "NMI=%c BEAM=%d,%d",
+    			YESNO(nmi_generator), video.x, video.y);
 
     return buff;
 }
@@ -1264,8 +1133,6 @@ void ZX81SetupJoystick(void)
 
 void ZX81SaveJoystick(void)
 {
-    ClearKeys();
-
     if (GUIFileSelect("JOYSTICK FILE TO SAVE", FALSE,
 		      joykey_file[0] ? Dirname(joykey_file) :
 					 SConfig(CONF_TAPEDIR),
@@ -1278,8 +1145,6 @@ void ZX81SaveJoystick(void)
 
 void ZX81LoadJoystick(void)
 {
-    ClearKeys();
-
     if (GUIFileSelect("JOYSTICK FILE TO LOAD", TRUE,
 		      joykey_file[0] ? Dirname(joykey_file) :
 					 SConfig(CONF_TAPEDIR),

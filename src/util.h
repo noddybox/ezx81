@@ -39,6 +39,12 @@
 #define FALSE	0
 #endif
 
+/* As FILENAME_MAX is not recommended by GNU, choose an arbitray large
+   maxium path length.  If you have a path longer than this, then you have
+   too many directories!
+*/
+#define MAX_PATH_BUFF	(4096)
+
 /* ---------------------------------------- INTERFACES
 */
 

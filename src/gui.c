@@ -62,7 +62,7 @@
 */
 typedef struct
 {
-    char	name[MAXPATHLEN+1];
+    char	name[MAX_PATH_BUFF+1];
     unsigned 	size;
     int		is_dir;
 } FileEnt;
@@ -707,12 +707,12 @@ int GUIFileSelect(const char *prompt, int load,
 {
     int done=FALSE;
     int ret=FALSE;
-    char olddir[MAXPATHLEN+1];
-    char pwd[MAXPATHLEN+1];
-    char input[MAXPATHLEN + 1];
+    char olddir[MAX_PATH_BUFF+1];
+    char pwd[MAX_PATH_BUFF+1];
+    char input[MAX_PATH_BUFF + 1];
     int state;
 
-    getcwd(olddir,MAXPATHLEN);
+    getcwd(olddir,MAX_PATH_BUFF);
 
     if (chdir(start_dir) == -1)
     {
@@ -732,7 +732,7 @@ int GUIFileSelect(const char *prompt, int load,
 	char **list;
 	int no=0;
 
-    	getcwd(pwd,MAXPATHLEN);
+    	getcwd(pwd,MAX_PATH_BUFF);
 
 	d=opendir(".");
 

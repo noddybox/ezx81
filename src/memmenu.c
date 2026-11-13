@@ -33,6 +33,7 @@
 #include "gfx.h"
 #include "gui.h"
 #include "expr.h"
+#include "file.h"
 #include "util.h"
 
 #include <SDL.h>
@@ -84,6 +85,10 @@ static FILE		*trace=NULL;
 static Breakpoint	bpoint={0,NULL,NULL};
 static const char	*raised=NULL;
 static int		lodged=FALSE;
+
+static char		bpoint_file[MAX_PATH_BUFF] = ".";
+static const char	*bpoint_ext = "brk";
+static const char	*bpoint_magic = "!BRKPT";
 
 
 /* ---------------------------------------- PROTOS
@@ -305,6 +310,8 @@ static void DisplayMenu(void)
 	"L   - Display defined labels",
 	"R   - Reset                 ",
 	"S   - Show current CPU state",
+	"B   - Save breakpoints      ",
+	"O   - Load breakpoints      ",
 	"X   - Exit (without confirm)",
     	"ESC - Return                ",
 	NULL
@@ -378,8 +385,8 @@ void DisplayState(Z80 *z80)
     int y;
 
     Z80GetState(z80, &state);
-    y=DisplayZ80State(state,Z80Cycles(z80),GFX_HEIGHT/2,RED);
-    GFXPrintPaper(0,y,GREEN,BLACK,"%s",ZX81Info(z80));
+    y = DisplayZ80State(state, Z80Cycles(z80), GFX_HEIGHT/2, RED);
+    GFXPrintPaper(0, y + 8, GREEN, BLACK, "%s", ZX81Info(z80));
 }
 
 static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
@@ -563,7 +570,7 @@ static void DoDisassem(Z80 *z80)
 
 static void DoDisassemFile(Z80 *z80)
 {
-    static char fname[FILENAME_MAX]="";
+    static char fname[MAX_PATH_BUFF]="";
     FILE *fp;
     Z80Word start;
     Z80Word len;
@@ -1009,7 +1016,7 @@ static void DoRemoveBreakpoint(Z80 *z80)
 }
 
 
-static void DoClearBreakpoint(Z80 *z80)
+static void DoClearBreakpoints(Z80 *z80)
 {
     if (GUIMessage(eYesNoBox,"BREAKPOINTS","Clear all breakpoints"))
     {
@@ -1019,7 +1026,9 @@ static void DoClearBreakpoint(Z80 *z80)
 	    free(bpoint.expr[f]);
 
 	free(bpoint.expr);
+	free(bpoint.active);
 	bpoint.expr=NULL;
+	bpoint.active=NULL;
 	bpoint.no=0;
 
 	ClearCallback(z80);
@@ -1191,7 +1200,7 @@ static void DoMonitor(Z80 *z80)
 		    break;
 
 		case '8':
-		    DoClearBreakpoint(z80);
+		    DoClearBreakpoints(z80);
 		    break;
 
 		default:
@@ -1254,6 +1263,98 @@ static void DoDisplayLabels(void)
     }
 
     free(list);
+}
+
+
+static void DoSaveBreakpoints(void)
+{
+    if (bpoint.no == 0)
+    {
+	GUIMessage(eMessageBox,"ERROR","No breakpoints to save");
+	return;
+    }
+
+    if (GUIFileSelect("SELECT BREAKPOINTS TO SAVE", FALSE, bpoint_file,
+		      bpoint_file, bpoint_ext))
+    {
+    	void *fp;
+	int f;
+
+	fp = FILEOpen(bpoint_file, TRUE, bpoint_magic);
+
+	if (!fp)
+	{
+	    return;
+	}
+
+	FILEWriteNumber(fp, bpoint.no);
+
+	for(f = 0; f < bpoint.no; f++)
+	{
+	    FILEWriteNumber(fp, bpoint.active[f]);
+	    FILEWriteString(fp, bpoint.expr[f]);
+	}
+
+	FILEClose(fp);
+    }
+}
+
+
+static void DoLoadBreakpoints(Z80 *z80)
+{
+    if (GUIFileSelect("SELECT BREAKPOINTS TO LOAD", FALSE, bpoint_file,
+		      bpoint_file, bpoint_ext))
+    {
+	void *fp;
+	int start = 0;
+	long no;
+	int f;
+
+	fp = FILEOpen(bpoint_file, FALSE, bpoint_magic);
+
+	if (!fp)
+	{
+	    return;
+	}
+
+	if (bpoint.no)
+	{
+	    if (GUIMessage(eYesNoBox, "BREAKPOINTS", "Add to breakpoints?"))
+	    {
+		start = bpoint.no;
+	    }
+	    else
+	    {
+		for (f = 0; f < bpoint.no; f++)
+		{
+		    free(bpoint.expr[f]);
+		}
+
+		free(bpoint.expr);
+		free(bpoint.active);
+
+		bpoint.expr = NULL;
+		bpoint.active = NULL;
+		bpoint.no = 0;
+	    }
+	}
+
+	no = FILEReadNumber(fp);
+
+	bpoint.no += no;
+	bpoint.expr = Realloc(bpoint.expr, bpoint.no * sizeof *bpoint.expr);
+	bpoint.active = Realloc(bpoint.active, bpoint.no *
+						    sizeof *bpoint.active);
+
+	for(f = 0; f < no; f++)
+	{
+	    bpoint.active[start + f] = FILEReadNumber(fp);
+	    bpoint.expr[start + f] = FILEReadString(fp);
+	}
+
+	FILEClose(fp);
+	SetCallback(z80);
+    }
 }
 
 
@@ -1326,7 +1427,7 @@ int MemoryMenu(Z80 *z80)
 		    break;
 
 		case '8':
-		    DoClearBreakpoint(z80);
+		    DoClearBreakpoints(z80);
 		    break;
 
 		case '9':
@@ -1352,13 +1453,21 @@ int MemoryMenu(Z80 *z80)
 		    Centre("CURRENT STATE",0,WHITE);
 		    Centre("Press a key",9,RED);
 		    y=DisplayZ80State(state,Z80Cycles(z80),20,WHITE);
-		    GFXPrint(0,y,GREEN,"%s",ZX81Info(z80));
+		    GFXPrint(0,y+8,GREEN,"%s",ZX81Info(z80));
 		    GFXEndFrame(FALSE);
 		    GFXWaitKey(NULL);
 		    break;
 
 		case 'L':
 		    DoDisplayLabels();
+		    break;
+
+		case 'B':
+		    DoSaveBreakpoints();
+		    break;
+
+		case 'O':
+		    DoLoadBreakpoints(z80);
 		    break;
 
 		default:

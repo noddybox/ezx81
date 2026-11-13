@@ -46,6 +46,7 @@ static Uint32           *pixels;
 static Uint32		ticks;
 static Uint32		frame;
 static int		scale;
+static int		initialised;
 
 static void		(*putpixel)(int x, int y, Uint32 col);
 
@@ -157,6 +158,8 @@ void GFXInit(void)
     if (SDL_Init(flags))
 	Exit("Failed to init SDL: %s\n",SDL_GetError());
 
+    initialised = TRUE;
+
     if (!(window=SDL_CreateWindow("eZX81",
                                   SDL_WINDOWPOS_UNDEFINED,
                                   SDL_WINDOWPOS_UNDEFINED,
@@ -188,8 +191,16 @@ void GFXInit(void)
 
     for(f=0;f<NO_BMPIX;f++)
     	bmpix[f].col=GFXRGB(bmpix[f].r,bmpix[f].g,bmpix[f].b);
+}
 
-    atexit(SDL_Quit);
+
+void GFXClose(void)
+{
+    if (initialised)
+    {
+	initialised = FALSE;
+    	SDL_Quit();
+    }
 }
 
 

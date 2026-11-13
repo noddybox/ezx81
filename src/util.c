@@ -108,7 +108,7 @@ int CheckExtension(const char *path, const char *extension)
 
 const char *Dirname(const char *path)
 {
-    static char dir[FILENAME_MAX];
+    static char dir[MAX_PATH_BUFF];
     char *p;
 
     strcpy(dir, path);
@@ -130,7 +130,7 @@ const char *Dirname(const char *path)
 
 const char *ReplaceExtension(const char *path, const char *extension)
 {
-    static char result[FILENAME_MAX];
+    static char result[MAX_PATH_BUFF];
     char *p;
 
     strcpy(result, path);
