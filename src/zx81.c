@@ -34,6 +34,7 @@
 #include "bitmaps.h"
 #include "util.h"
 #include "exit.h"
+#include "file.h"
 
 
 /* ---------------------------------------- STATICS
@@ -132,6 +133,7 @@ static Joykey		joystick[JOY_NumButtons] =
 static int		defining_joykeys = FALSE;
 static char 		joykey_file[MAX_PATH_BUFF];
 static const char	*joyfile_ext = "joy81";
+static const char	*joyfile_magic = "!JOY81";
 static JoystickButton	last_joystick;
 
 
@@ -328,47 +330,58 @@ static const char *JoystickMapping(JoystickButton button)
 
 static void SaveJoystick(const char *path)
 {
-    FILE *fp;
+    void *fp;
     int f;
 
-    if (!(fp = fopen(path, "wb")))
-    {
-	GUIMessage(eMessageBox,
-		   "ERROR","Failed to open save\nfile for joystick mappings");
+    fp = FILEOpen(path, TRUE, joyfile_magic);
 
-	return;
+    if (!fp)
+    {
+    	return;
     }
+
+    FILEWriteNumber(fp, JOY_NumButtons);
 
     for(f = 0; f < JOY_NumButtons; f++)
     {
-    	fwrite(&joystick[f].row, 1, 1, fp);
-    	fwrite(&joystick[f].bit, 1, 1, fp);
+	FILEWriteNumber(fp, joystick[f].row);
+	FILEWriteNumber(fp, joystick[f].bit);
     }
 
-    fclose(fp);
+    FILEClose(fp);
 }
 
 
 static void LoadJoystick(const char *path)
 {
-    FILE *fp;
+    void *fp;
+    long no;
     int f;
 
-    if (!(fp = fopen(path, "rb")))
-    {
-	GUIMessage(eMessageBox,
-		   "ERROR","Failed to open load\n file for joystick mappings");
+    fp = FILEOpen(path, FALSE, joyfile_magic);
 
-	return;
+    if (!fp)
+    {
+    	return;
     }
 
-    for(f = 0; f < JOY_NumButtons; f++)
+    no = FILEReadNumber(fp);
+
+    if (no > JOY_NumButtons)
     {
-    	fread(&joystick[f].row, 1, 1, fp);
-    	fread(&joystick[f].bit, 1, 1, fp);
+    	GUIMessage(eMessageBox, "WARNING", "More buttons defined in file\n"
+						"than expected");
+
+	no = JOY_NumButtons;
     }
 
-    fclose(fp);
+    for(f = 0; f < no; f++)
+    {
+	joystick[f].row = FILEReadNumber(fp);
+	joystick[f].bit = FILEReadNumber(fp);
+    }
+
+    FILEClose(fp);
 }
 
 
