@@ -31,8 +31,6 @@
 #include "gui.h"
 #include "util.h"
 
-#define EZX81_FILE_H
-
 /* ---------------------------------------- EXPORTED FUNCTIONS
 */
 void *FILEOpen(const char *path, int for_write, const char *magic)
