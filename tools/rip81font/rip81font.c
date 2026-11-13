@@ -63,7 +63,17 @@ static void OutputChar(FILE *fp, unsigned char *def, unsigned code, int invert)
 int main(int argc, char *argv[])
 {
     unsigned char rom[0x2000] = {0};
-    unsigned char undefined[8] = {0, 0x18, 0x18, 0x18, 0, 0x18, 0x18, 0};
+    unsigned char undefined[8] =
+    {
+	0x00,
+	0x18,
+	0x24,
+	0x42,
+	0x42,
+	0x24,
+	0x18,
+	0x00,
+    };
 
     if (argc != 2)
     {
