@@ -56,6 +56,8 @@ static int Z80_CheckInterrupt(Z80 *cpu)
     {
     	if (cpu->nmi)
 	{
+	    INC_R;
+
 	    if (cpu->halt)
 	    {
 		cpu->halt=FALSE;
@@ -73,6 +75,8 @@ static int Z80_CheckInterrupt(Z80 *cpu)
 	}
     	else if (cpu->IFF1)
 	{
+	    INC_R;
+
 	    if (cpu->halt)
 	    {
 		cpu->halt=FALSE;

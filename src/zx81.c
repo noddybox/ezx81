@@ -559,13 +559,16 @@ static void VideoHsync(Z80 *z80)
     	Z80NMI(z80);
     }
 
-    if (video.row >= mem[MARGIN])
+    if (!video.in_vsync)
     {
-	video.x = 0;
-	video.y++;
-    }
+	if (video.row >= mem[MARGIN])
+	{
+	    video.x = 0;
+	    video.y++;
+	}
 
-    video.row++;
+	video.row++;
+    }
 
     if (fast_mode && video.row == PAL_SCANLINE)
     {
@@ -620,29 +623,20 @@ static int CheckTimers(Z80 *z80, Z80Val val)
     	Z80Interrupt(z80, 0);
     }
 
-    /* If we're in VSYNC keep resetting the cycle count until vsync ends
-    */
-    if (video.in_vsync)
+    if (val >= HSYNC_TSTATES)
     {
-	Z80ResetCycles(z80, 0);
-    }
-    else
-    {
-	if (val >= HSYNC_TSTATES)
+	VideoHsync(z80);
+
+	if (started && (mem[CDFLAG] & 0x80))
 	{
-	    VideoHsync(z80);
-
-	    if (started && (mem[CDFLAG] & 0x80))
-	    {
-		fast_mode = FALSE;
-	    }
-	    else
-	    {
-		fast_mode = TRUE;
-	    }
-
-	    Z80ResetCycles(z80, val - HSYNC_TSTATES);
+	    fast_mode = FALSE;
 	}
+	else
+	{
+	    fast_mode = TRUE;
+	}
+
+	Z80ResetCycles(z80, val - HSYNC_TSTATES);
     }
 
     return TRUE;
