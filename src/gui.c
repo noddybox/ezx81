@@ -707,17 +707,28 @@ int GUIFileSelect(const char *prompt, int load,
 {
     int done=FALSE;
     int ret=FALSE;
-    char olddir[MAX_PATH_BUFF+1];
-    char pwd[MAX_PATH_BUFF+1];
-    char input[MAX_PATH_BUFF + 1];
+    char pwd[MAX_PATH_BUFF] = {0};
+    char input[MAX_PATH_BUFF];
     int state;
 
-    getcwd(olddir,MAX_PATH_BUFF);
-
-    if (chdir(start_dir) == -1)
+    if (IsDirectory(start_dir))
     {
-    	chdir(Dirname(start_dir));
+    	strcpy(pwd, start_dir);
     }
+    else
+    {
+    	if (IsDirectory(Dirname(start_dir)))
+	{
+	    strcpy(pwd, Dirname(start_dir));
+	}
+    }
+
+    if (!pwd[0])
+    {
+    	getcwd(pwd, sizeof pwd);
+    }
+
+    Realpath(pwd);
 
     state = GFXSetTextInput(TRUE);
 
@@ -732,9 +743,7 @@ int GUIFileSelect(const char *prompt, int load,
 	char **list;
 	int no=0;
 
-    	getcwd(pwd,MAX_PATH_BUFF);
-
-	d=opendir(".");
+	d=opendir(pwd);
 
 	while(readdir(d))
 	    no++;
@@ -749,16 +758,20 @@ int GUIFileSelect(const char *prompt, int load,
 
 	while((de=readdir(d)))
 	{
-	    if (stat(de->d_name,&sbuf)!=-1)
+	    char filename[MAX_PATH_BUFF];
+
+	    snprintf(filename, sizeof filename, "%s/%s", pwd, de->d_name);
+
+	    if (stat(filename, &sbuf)!=-1)
 	    {
-	    	if (S_ISDIR(sbuf.st_mode) && de->d_name[0]!='.')
+	    	if (S_ISDIR(sbuf.st_mode) && de->d_name[0] != '.')
 		{
 		    strcpy(fe[no].name,de->d_name);
 		    fe[no].is_dir=TRUE;
 		    no++;
 		}
 		else if (S_ISREG(sbuf.st_mode) && de->d_name[0]!='.' &&
-			   CheckExtension(de->d_name, extension))
+			    CheckExtension(de->d_name, extension))
 		{
 		    strcpy(fe[no].name,de->d_name);
 		    fe[no].is_dir=FALSE;
@@ -784,10 +797,10 @@ int GUIFileSelect(const char *prompt, int load,
 		sprintf(list[f],"%-20.20s %9u",fe[f].name,fe[f].size);
 	}
 
-	sel=DoList(pwd, no, GUI_LIST_CAST(list), NULL,
-		   load ? NULL:input, FALSE, -1);
+	sel=DoList(pwd, no, GUI_LIST_CAST(list), 
+		   NULL, load ? NULL:input, FALSE, -1);
 
-	if (sel == -1)
+	if (sel==LIST_CANCEL)
 	{
 	    ret=FALSE;
 	    done=TRUE;
@@ -816,7 +829,9 @@ int GUIFileSelect(const char *prompt, int load,
 	    {
 		if (fe[sel].is_dir)
 		{
-		    chdir(fe[sel].name);
+		    strcat(pwd, "/");
+		    strcat(pwd, fe[sel].name);
+		    Realpath(pwd);
 		}
 		else
 		{

@@ -1,5 +1,7 @@
 ezx81
 *.o
 *.brk
-depend.mak
+*.pbm
 core
+depend.mak
+debug.txt

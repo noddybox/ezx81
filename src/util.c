@@ -29,6 +29,7 @@
 #include <ctype.h>
 
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "util.h"
 #include "exit.h"
@@ -149,10 +150,25 @@ const char *ReplaceExtension(const char *path, const char *extension)
 
 void Debug(const char *format, ...)
 {
+    static FILE *fp;
     va_list ap;
 
+    if (!fp)
+    {
+    	fp = fopen("./debug.txt", "w");
+
+	if (!fp)
+	{
+	    fp = stderr;
+	}
+	else
+	{
+	    setbuf(fp, NULL);
+	}
+    }
+
     va_start(ap, format);
-    vfprintf(stderr, format, ap);
+    vfprintf(fp, format, ap);
     va_end(ap);
 }
 
@@ -187,4 +203,45 @@ int StartsWith(const char *a, const char *b, size_t len)
 int FileExists(const char *path)
 {
     return access(path, F_OK) == 0;
+}
+
+
+int Clamp(int value, int min, int max)
+{
+    if (value < min)
+    {
+    	value = min;
+    }
+
+    if (value > max)
+    {
+    	value = max;
+    }
+
+    return value;
+}
+
+
+int IsDirectory(const char *path)
+{
+    struct stat st;
+
+    if (stat(path, &st) == -1)
+    {
+    	return FALSE;
+    }
+
+    return S_ISDIR(st.st_mode);
+}
+
+
+void Realpath(char *path)
+{
+    char *result;
+
+    if ((result = realpath(path, NULL)))
+    {
+    	strcpy(path, result);
+	free(result);
+    }
 }

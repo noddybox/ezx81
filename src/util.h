@@ -116,4 +116,20 @@ int		StartsWith(const char *a, const char *b, size_t len);
 int		FileExists(const char *path);
 
 
+/* Returns an int, clamped to the passed range.
+*/
+int		Clamp(int value, int min, int max);
+
+
+/* Returns TRUE is path is a directory
+*/
+int		IsDirectory(const char *path);
+
+
+/* Acts as a wrapper around realpath(3).  If the path cannot be resolved
+   path is unchanged, but otherwise it is updated with the real path.
+*/
+void		Realpath(char *path);
+
+
 #endif
