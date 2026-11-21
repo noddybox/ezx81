@@ -65,7 +65,7 @@ static int Z80_CheckInterrupt(Z80 *cpu)
 		cpu->PC++;
 	    }
 
-	    TSTATE(2);
+	    TSTATE(11);
 	    cpu->IFF2=cpu->IFF1;
 	    cpu->IFF1=0;
 	    cpu->nmi=FALSE;
@@ -84,23 +84,24 @@ static int Z80_CheckInterrupt(Z80 *cpu)
 		cpu->PC++;
 	    }
 
-	    TSTATE(2);
-
 	    switch(cpu->IM)
 	    {
 		default:
 		case 0:
 		    INC_R;
+		    TSTATE(2);
 		    Z80_Decode(cpu,cpu->devbyte);
 		    return TRUE;
 		    break;
 
 		case 1:
+		    TSTATE(13);
 		    PUSH(cpu->PC);
 		    cpu->PC=0x38;
 		    break;
 
 		case 2:
+		    TSTATE(19);
 		    PUSH(cpu->PC);
                     vector=(Z80Word)cpu->I*256+cpu->devbyte;
                     cpu->PC=PEEKW(vector);
@@ -309,6 +310,9 @@ void Z80GetState(Z80 *cpu, Z80State *state)
     state->IM	=	cpu->IM;
     state->I	=	cpu->I;
     state->R	=	cpu->R;
+
+    state->irq	=	cpu->raise && !cpu->nmi;
+    state->nmi	=	cpu->raise && cpu->nmi;
 }
 
 

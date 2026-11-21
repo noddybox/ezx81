@@ -613,7 +613,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 
     Z80GetState(z80, &state);
 
-    if (state.R & 0x20)
+    if ((state.R & 0x40) == 0x00)
     {
     	Z80Interrupt(z80, 0);
     }
@@ -934,7 +934,7 @@ const Z80Label *ZX81GetLabels(void)
 	    {0x0229,	"DISPLAY_1"},
 	    {0x023e,	"DISPLAY_2"},
 	    {0x0292,	"DISPLAY_3"},
-	    {0x02bb,	"DISPLAY_5"},
+	    {0x02b5,	"DISPLAY_5"},
 	    {0x0340,	"SLOW"},
 	    {0x0420,	"FAST"},
 	    {0x0043,	"WAIT_INT"},

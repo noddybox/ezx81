@@ -122,6 +122,11 @@ typedef struct
     Z80Byte	IM;
     Z80Byte	I;
     Z80Byte	R;
+
+    /* The following are information only, and not updated by Z80SetState
+    */
+    int		nmi;
+    int		irq;
 } Z80State;
 
 

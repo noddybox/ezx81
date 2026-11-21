@@ -375,6 +375,10 @@ int DisplayZ80State(Z80State s, Z80Val cycle, int y, Uint32 col)
     GFXPrintPaper(0,y,col,BLACK,
     		  "IFF1=%2.2x  IFF2=%2.2x  CY=%8.8lx",
 		  s.IFF1,s.IFF2,cycle);
+    y+=8;
+    GFXPrintPaper(0,y,col,BLACK,
+    		  "IRQ:%c NMI:%c",s.irq ? FONT_TICK : ' ',
+		  		  s.nmi ? FONT_TICK : ' ' );
 
     return y+8;
 }
