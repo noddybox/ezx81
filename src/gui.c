@@ -35,10 +35,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-#include <SDL.h>
-
 #include "gui.h"
-#include "gfx.h"
 #include "util.h"
 #include "exit.h"
 
@@ -882,4 +879,191 @@ void GUIToast(const char *message)
     /* Force a redraw so that the toast appears, even during a keypress wait
     */
     GFXEndFrame(FALSE);
+}
+
+
+void GUIMonoBitmap(int width, int height,
+		   Uint32 white, Uint32 black,
+		   const unsigned char *bitmap)
+{
+    static char pbm_path[MAX_PATH_BUFF] = ".";
+    const int bx = 10;
+    const int by = 10;
+    const int boxw = GFX_WIDTH - bx * 2;
+    const int boxh = GFX_HEIGHT - by * 2;
+    const int bmph = boxh - 15;
+    int text_input;
+    int done = FALSE;
+    int ox = 0;
+    int oy = 0;
+    int pitch = width / 8;
+
+    text_input = GFXSetTextInput(FALSE);
+
+    if (width < boxw)
+    {
+    	ox = -(boxw - width) / 2;
+    }
+
+    while(!done)
+    {
+	SDL_Event *e;
+	int is_text;
+
+	GFXRect(bx - 1, by - 1, boxw + 2, boxh + 2, GREEN, FALSE);
+	GFXRect(bx, by, boxw, boxh, BLACK, TRUE);
+
+	for(int y = 0; y < bmph; y++)
+	{
+	    int py = oy + y;
+
+	    if (py < height)
+	    {
+		for(int x = 0; x < boxw; x++)
+		{
+		    int px = ox + x;
+
+		    if (px >= 0 && px < width)
+		    {
+			unsigned char b = bitmap[py * pitch + px/8];
+
+			if (b & (0x80 >> (px % 8)))
+			{
+			    GFXPlot(bx + x, by + y, black);
+			}
+			else
+			{
+			    GFXPlot(bx + x, by + y, white);
+			}
+		    }
+		}
+	    }
+	}
+
+	GFXPrint(bx + 5, by + boxh - 13, GREEN, "%s", "ESC - Exit  F1 - Help");
+
+	GFXEndFrame(FALSE);
+
+	e = GFXWaitKey(&is_text);
+
+	if (!is_text)
+	{
+	    switch(e->key.keysym.sym)
+	    {
+		case SDLK_ESCAPE:
+		    done = TRUE;
+		    break;
+
+		case SDLK_F1:
+		    GUIMessage(eMessageBox,
+			       "HELP",
+			       "ESC          - Quit               \n"
+			       "F1           - Help               \n"
+			       "F2           - Save PBM           \n"
+			       "Cursor Keys  - Move bitmap        \n"
+			       "Page Up/Down - Move bitmap        \n"
+			       "Home         - Reset to top       \n"
+			       "End          - Reset to bottom    ");
+		    break;
+
+		case SDLK_HOME:
+		    if (width < boxw)
+		    {
+			ox = -(boxw - width) / 2;
+		    }
+		    else
+		    {
+			ox = 0;
+		    }
+
+		    oy = 0;
+		    break;
+
+		case SDLK_END:
+		    if (height > bmph)
+		    {
+			if (width < boxw)
+			{
+			    ox = -(boxw - width) / 2;
+			}
+			else
+			{
+			    ox = 0;
+			}
+
+			oy = height - bmph;
+		    }
+		    break;
+
+		case SDLK_DOWN:
+		    if (oy < height - bmph)
+		    {
+		    	oy++;
+		    }
+		    break;
+
+		case SDLK_PAGEDOWN:
+		    if (oy < height - bmph)
+		    {
+		    	oy += bmph;
+		    }
+		    break;
+
+		case SDLK_UP:
+		    if (oy > 0)
+		    {
+		    	oy--;
+		    }
+		    break;
+
+		case SDLK_PAGEUP:
+		    oy -= bmph;
+
+		    if (oy < 0)
+		    {
+		    	oy = 0;
+		    }
+		    break;
+
+		case SDLK_RIGHT:
+		    if (ox < width - boxw)
+		    {
+		    	ox++;
+		    }
+		    break;
+
+		case SDLK_LEFT:
+		    if (ox > 0)
+		    {
+		    	ox--;
+		    }
+		    break;
+
+		case SDLK_F2:
+		    if (GUIFileSelect("SELECT PBM TO SAVE", FALSE,
+				      pbm_path, pbm_path, "pbm"))
+		    {
+		    	FILE *fp = fopen(pbm_path, "wb");
+
+			if (fp)
+			{
+			    fprintf(fp, "P4\n%d %d\n", width, height);
+			    fwrite(bitmap, 1, height * width / 8, fp);
+			    fclose(fp);
+			}
+			else
+			{
+			    GUIMessage(eMessageBox, "ERROR",
+			    		"Unable to write\n%s", pbm_path);
+			}
+		    }
+		    break;
+
+	    	default:
+		    break;
+	    }
+	}
+    }
+
+    GFXSetTextInput(text_input);
 }

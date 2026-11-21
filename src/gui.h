@@ -27,6 +27,8 @@
 #ifndef EZX81_GUI_H
 #define EZX81_GUI_H
 
+#include "gfx.h"
+
 /* ---------------------------------------- MACROS
 */
 
@@ -128,6 +130,15 @@ int		GUIFileSelect(const char *prompt,
 /* Display a simple one-line message that will disappear after a few seconds
 */
 void		GUIToast(const char *message);
+
+
+/* Draws a mono bitmap centred on the screen.  The bitmap can be bigger than
+   the display box and scrolled with the cursor keys.
+   Bit 0 indicates white, bit 1 indicates black.
+*/
+void		GUIMonoBitmap(int width, int height,
+			      Uint32 white, Uint32 black,
+			      const unsigned char *bitmap);
 
 
 #endif
