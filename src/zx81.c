@@ -45,26 +45,20 @@
 
 #define ED_SAVE		0xf0
 #define ED_LOAD		0xf1
-#define ED_WAITKEY	0xf2
-#define ED_ENDWAITKEY	0xf3
-#define ED_PAUSE	0xf4
 
 #define HSYNC_TSTATES	207
 #define FAST_TSTATES	(64000*10)
 
-#define E_LINE		16404
-#define LASTK1		16421
-#define LASTK2		16422
 #define MARGIN		16424
-#define FRAMES		16436
 #define CDFLAG		16443
-#define DFILE           0x400c
 
 #define YESNO(x)	((x) ? 'Y':'N')
 
 /* The ZX81 screen and emulation
 */
 static int		scr_enable=TRUE;
+
+static const Z80Timer	DISPLAY_TIMER = eZ80_Timer_1;
 
 #define	SCR_W		256
 #define	SCR_H		192
@@ -76,7 +70,6 @@ static int		scr_enable=TRUE;
 #define OFF_X		(GFX_WIDTH-SCR_W)/2
 #define OFF_Y		(GFX_HEIGHT-SCR_H)/2
 
-static int		waitkey=FALSE;
 static int		started=FALSE;
 
 static int		last_I;
@@ -615,6 +608,7 @@ static void VideoShifter(Z80 *z80, Z80Byte chr)
 static int CheckTimers(Z80 *z80, Z80Val val)
 {
     Z80State state;
+    Z80Val timer = Z80GetTimer(z80, DISPLAY_TIMER);
 
     Z80GetState(z80, &state);
 
@@ -623,7 +617,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
     	Z80Interrupt(z80, 0);
     }
 
-    if (val >= HSYNC_TSTATES)
+    if (timer >= HSYNC_TSTATES)
     {
 	VideoHsync(z80);
 
@@ -636,7 +630,7 @@ static int CheckTimers(Z80 *z80, Z80Val val)
 	    fast_mode = TRUE;
 	}
 
-	Z80ResetCycles(z80, val - HSYNC_TSTATES);
+	Z80SetTimer(z80, DISPLAY_TIMER, timer - HSYNC_TSTATES);
     }
 
     return TRUE;
@@ -658,35 +652,6 @@ static int EDCallback(Z80 *z80, Z80Val data)
 
     	case ED_LOAD:
 	    LoadTape(z80);
-	    break;
-
-	case ED_WAITKEY:
-	    waitkey = TRUE;
-	    started = TRUE;
-	    break;
-
-	case ED_ENDWAITKEY:
-	    waitkey = FALSE;
-	    break;
-
-	case ED_PAUSE:
-	    waitkey = TRUE;
-
-	    pause = state.BC;
-
-	    while(--pause && !(mem[CDFLAG] & 1))
-	    {
-		SDL_Event *e;
-
-		while((e = GFXGetKey()))
-		{
-		    ZX81KeyEvent(e);
-		}
-
-		CheckTimers(z80, 0);
-	    }
-
-	    waitkey = FALSE;
 	    break;
 
 	default:
