@@ -1146,7 +1146,7 @@ static void DoMonitor(Z80 *z80)
 	    {
 		case SDLK_F1:
 		    GUIMessage
-			(eMessageBox,"PLAYBACK HELP","%s",
+			(eMessageBox,"MONITOR HELP","%s",
 			   "ESC   - Exit                     \n"
 			   "ENTER - Single step processor    \n"
 			   "R     - Run till break or stop   \n"
