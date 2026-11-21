@@ -42,11 +42,12 @@ typedef enum
     JOY_Button_B,
     JOY_Left_Shoulder,
     JOY_Right_Shoulder,
+    JOY_Start,
     JOY_NumButtons
 } JoystickButton;
 
 #define JOY_FIRST_BUTTON	(JOY_Left)
-#define JOY_LAST_BUTTON		(JOY_Right_Shoulder)
+#define JOY_LAST_BUTTON		(JOY_Start)
 
 
 /* Callback for joystick events

@@ -121,6 +121,7 @@ static Joykey		joystick[JOY_NumButtons] =
     {4, 1 << 0},		/* JOY_Button_B */
     {4, 1 << 0},		/* JOY_Right_Shoulder */
     {4, 1 << 0},		/* JOY_Left_Shoulder */
+    {6, 1 << 0},		/* JOY_Start */
 };
 
 static int		defining_joykeys = FALSE;

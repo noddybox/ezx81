@@ -98,10 +98,11 @@ int main(int argc, char *argv[])
     quit=FALSE;
 
     /* Check for initial memory menu usage
-       TODO: Proper switch handling
     */
-    if (argc>1 && strcmp(argv[1],"-m")==0)
-	quit=MemoryMenu(z80);
+    if (argc > 1 && strcmp(argv[1], "-m") == 0)
+    {
+	quit = MemoryMenu(z80);
+    }
 
     while(!quit)
     {

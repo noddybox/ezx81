@@ -19,6 +19,12 @@ You will only need these if you touch the image files under the `gfx` directory.
 To run it simply run the generated `ezx81` executable.  It reads configuration
 from `$HOME/.ezx81`, an example of which can be found in `example_config`.
 
+Optionally the following switches can be given.
+
+|**Switch**|**Description**|
+|-|-|
+|`-m`|Open the memory menu.|
+
 In use the keyboard is as the ZX81, with the shift skeys acting as the ZX81
 shift key.  The backspace and delete key is mapped to the ZX81 delete and the
 cursor keys are mapped to the appropriate shifted number keys.
