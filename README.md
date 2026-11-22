@@ -77,7 +77,7 @@ main axis is controlled by a digital D-pad.
 
 By default the mapped keys are the cursor keys (`5`, `6`, `7` and `8`) for
 the D-pad direction and the buttons (A, B, X, Y and shoulder buttons)
-mapped to the `0` key for fire.
+mapped to the `0` key for fire.  Start is mapped to ENTER and Select to SPACE.
 
 By selecting F7 you can define which joypad button or direction maps to which
 key.  Follow the on-screen prompts.

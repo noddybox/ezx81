@@ -121,6 +121,7 @@ static Joykey		joystick[JOY_NumButtons] =
     {4, 1 << 0},		/* JOY_Button_B */
     {4, 1 << 0},		/* JOY_Right_Shoulder */
     {4, 1 << 0},		/* JOY_Left_Shoulder */
+    {7, 1 << 0},		/* JOY_Select */
     {6, 1 << 0},		/* JOY_Start */
 };
 
@@ -188,7 +189,7 @@ static const MatrixMap keymap[]=
     {SDLK_y,		"Y",		KY1(5,4)},
     {SDLK_z,		"Z",		KY1(0,1)},
 
-    {SDLK_RETURN,	"Return",	KY1(6,0)},
+    {SDLK_RETURN,	"Enter",	KY1(6,0)},
     {SDLK_SPACE,	"Space",	KY1(7,0)},
 
     {SDLK_COMMA,	".",		KY1(7,1)},	/* Correct place...   */

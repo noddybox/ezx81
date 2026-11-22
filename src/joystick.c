@@ -1,6 +1,6 @@
 /*
 
-    espec - Sinclair Spectrum emulator
+    ezx81 - ZX81 emulator
 
     Copyright (C) 2026  Ian Cowburn (deathstation9000@gmail.com)
 
@@ -59,6 +59,8 @@ static JoystickButton MapButton(SDL_GameControllerButton button)
 	    return JOY_Left_Shoulder;
 	case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
 	    return JOY_Right_Shoulder;
+	case SDL_CONTROLLER_BUTTON_BACK:
+	    return JOY_Select;
 	case SDL_CONTROLLER_BUTTON_START:
 	    return JOY_Start;
     	default:
@@ -225,7 +227,7 @@ int JOYConnected(void)
 
 const char *JOYButtonName(JoystickButton button)
 {
-    static const char *name[] =
+    static const char *name[JOY_NumButtons] =
     {
     	"Left",
     	"Right",
@@ -237,7 +239,8 @@ const char *JOYButtonName(JoystickButton button)
     	"B",
     	"Left Shoulder",
     	"Right Shoulder",
-    	"Start",
+    	"Select",
+    	"Start"
     };
 
     return name[button];

@@ -42,6 +42,7 @@ typedef enum
     JOY_Button_B,
     JOY_Left_Shoulder,
     JOY_Right_Shoulder,
+    JOY_Select,
     JOY_Start,
     JOY_NumButtons
 } JoystickButton;
