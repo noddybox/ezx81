@@ -39,13 +39,14 @@ void	ZX81Init(Z80 *z80);
 */
 void	ZX81KeyEvent(SDL_Event *e);
 
-/* Interfaces for the Z80
+/* Interfaces for the Z80 and memory menu
 */
 Z80Byte	ZX81ReadMem(Z80 *z80, Z80Word addr);
 void	ZX81WriteMem(Z80 *z80, Z80Word addr, Z80Byte val);
 Z80Byte	ZX81ReadPort(Z80 *z80, Z80Word port);
 void	ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val);
 Z80Byte	ZX81ReadForDisassem(Z80 *z80, Z80Word addr);
+void	ZX81WriteForDisassem(Z80 *z80, Z80Word addr, Z80Byte val);
 
 const Z80Label	*ZX81GetLabels(void);
 

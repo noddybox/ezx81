@@ -500,17 +500,34 @@ static void DoDisassem(Z80 *z80)
 	    switch(e->key.keysym.sym)
 	    {
 		case SDLK_F1:
-		    GUIMessage
-			(eMessageBox, "DISASSEMBLY HELP","%s",
-			   "ESC         - Exit              \n"
-			   "H           - Disassembly/hex   \n"
-			   "Enter       - Enter address     \n"
-			   "Up          - Prev byte         \n"
-			   "Down        - Next op           \n"
-			   "Page Up     - Back 1 page       \n"
-			   "Page Down   - Forward 1 page    \n"
-			   "Left        - Forward 1024 bytes\n"
-			   "Right       - Back 1024 bytes   ");
+		    if (hexmode)
+		    {
+			GUIMessage(eMessageBox, "HEX MODE HELP","%s",
+				    "ESC         - Exit              \n"
+				    "H           - Switch disassembly\n"
+				    "I           - Enter bytes       \n"
+				    "Enter       - Enter address     \n"
+				    "Up          - Prev byte         \n"
+				    "Down        - Next op           \n"
+				    "Page Up     - Back 1 page       \n"
+				    "Page Down   - Forward 1 page    \n"
+				    "Left        - Back 1 byte       \n"
+				    "Right       - Forward 1 bytes   ");
+		    }
+		    else
+		    {
+			GUIMessage(eMessageBox, "DISASSEMBLY HELP","%s",
+				    "ESC         - Exit              \n"
+				    "H           - Switch hex mode   \n"
+				    "I           - Enter bytes       \n"
+				    "Enter       - Enter address     \n"
+				    "Up          - Prev byte         \n"
+				    "Down        - Next op           \n"
+				    "Page Up     - Back 1 page       \n"
+				    "Page Down   - Forward 1 page    \n"
+				    "Left        - Forward 1024 bytes\n"
+				    "Right       - Back 1024 bytes   ");
+		    }
 		    break;
 
 		case SDLK_ESCAPE:
@@ -545,11 +562,25 @@ static void DoDisassem(Z80 *z80)
 		    break;
 
 		case SDLK_LEFT:
-		    pc-=1024;
+		    if (hexmode)
+		    {
+		    	pc--;
+		    }
+		    else
+		    {
+			pc -= 1024;
+		    }
 		    break;
 
 		case SDLK_RIGHT:
-		    pc+=1024;
+		    if (hexmode)
+		    {
+		    	pc++;
+		    }
+		    else
+		    {
+			pc += 1024;
+		    }
 		    break;
 
 		default:
@@ -563,6 +594,47 @@ static void DoDisassem(Z80 *z80)
 		case 'H':
 		    hexmode=!hexmode;
 		    break;
+
+		case 'I':
+		{
+		    char prompt[32];
+		    char *input;
+
+		    snprintf(prompt, sizeof prompt, "0x%4.4x:",
+		    			(unsigned int)pc);
+
+		    input = StrCopy(GUIInputString(prompt, ""));
+
+		    if (*input)
+		    {
+			Z80Word poke = pc;
+			char *save;
+		    	char *p;
+
+			p = strtok_r(input, ",", &save);
+
+			while(p)
+			{
+			    long val;
+
+			    if (ExprEval(p, &val, Expand, z80))
+			    {
+			    	ZX81WriteForDisassem(z80, poke, (Z80Byte)val);
+			    }
+			    else
+			    {
+			    	GUIMessage(eMessageBox, "ERROR",
+					    "Invalid expression: %s", p);
+			    }
+
+			    poke++;
+			    p = strtok_r(NULL, ",", &save);
+			}
+		    }
+
+		    free(input);
+		    break;
+		}
 
 		default:
 		    break;

@@ -508,15 +508,12 @@ static void DrawSnow(void)
 
 static void VideoStartVsync(Z80 *z80)
 {
-    Debug("In START VSYNC\n");
     video.in_vsync = TRUE;
 }
 
 
 static void VideoEndVsync(Z80 *z80)
 {
-    Debug("In END VSYNC\n");
-
     GFXEndFrame(TRUE);
     GFXStartFrame();
     GFXClear(white);
@@ -531,8 +528,6 @@ static void VideoEndVsync(Z80 *z80)
 
 static void VideoFalseVsync(Z80 *z80)
 {
-    Debug("In FALSE VSYNC\n");
-
     DrawSnow();
     GFXEndFrame(TRUE);
     GFXStartFrame();
@@ -550,13 +545,12 @@ static void VideoHsync(Z80 *z80)
 {
     if (nmi_generator)
     {
-	Debug("Triggering NMI\n");
     	Z80NMI(z80);
     }
 
     if (!video.in_vsync)
     {
-	if (video.row >= mem[MARGIN])
+	/* if (video.row >= mem[MARGIN]) */
 	{
 	    video.x = 0;
 	    video.y++;
@@ -569,8 +563,6 @@ static void VideoHsync(Z80 *z80)
     {
 	VideoFalseVsync(z80);
     }
-
-    Debug("In HSYNC (y = %d, row = %d)\n", video.y, video.row);
 }
 
 
@@ -912,6 +904,15 @@ void ZX81WritePort(Z80 *z80, Z80Word port, Z80Byte val)
 Z80Byte ZX81ReadForDisassem(Z80 *z80, Z80Word addr)
 {
     return mem[addr&0x7fff];
+}
+
+
+void ZX81WriteForDisassem(Z80 *z80, Z80Word addr, Z80Byte val)
+{
+    addr=addr&0x7fff;
+
+    if (addr>=RAMBOT && addr<=RAMTOP)
+	mem[addr]=val;
 }
 
 
