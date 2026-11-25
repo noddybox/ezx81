@@ -2,6 +2,7 @@ ezx81
 *.o
 *.brk
 *.pbm
+*.bin
 core
 depend.mak
 debug.txt

@@ -506,6 +506,8 @@ static void DoDisassem(Z80 *z80)
 				    "ESC         - Exit              \n"
 				    "H           - Switch disassembly\n"
 				    "I           - Enter bytes       \n"
+				    "L           - Load from file    \n"
+				    "S           - Save to file      \n"
 				    "Enter       - Enter address     \n"
 				    "Up          - Prev byte         \n"
 				    "Down        - Next op           \n"
@@ -520,6 +522,8 @@ static void DoDisassem(Z80 *z80)
 				    "ESC         - Exit              \n"
 				    "H           - Switch hex mode   \n"
 				    "I           - Enter bytes       \n"
+				    "L           - Load from file    \n"
+				    "S           - Save to file      \n"
 				    "Enter       - Enter address     \n"
 				    "Up          - Prev byte         \n"
 				    "Down        - Next op           \n"
@@ -636,6 +640,71 @@ static void DoDisassem(Z80 *z80)
 		    break;
 		}
 
+		case 'L':
+		{
+		    static char fname[MAX_PATH_BUFF]=".";
+		    FILE *fp;
+		    Z80Word start;
+
+		    EnterAddress("Load to address?", z80, &start);
+
+		    if (GUIFileSelect("SELECT FILE", TRUE, fname, fname, NULL))
+		    {
+			if (!(fp=fopen(fname,"rb")))
+			{
+			    GUIMessage(eMessageBox,"ERROR",
+			    		"Couldn't open file:\n%s", fname);
+			}
+			else
+			{
+			    int c;
+
+			    c = fgetc(fp);
+
+			    while(c != EOF)
+			    {
+				ZX81WriteForDisassem(z80, start++, (Z80Byte)c);
+				c = fgetc(fp);
+			    }
+
+			    fclose(fp);
+			}
+		    }
+
+		    break;
+		}
+
+		case 'S':
+		{
+		    static char fname[MAX_PATH_BUFF]=".";
+		    FILE *fp;
+		    Z80Word start;
+		    Z80Word len;
+
+		    EnterAddress("Save from address?", z80, &start);
+		    EnterAddress("How many bytes?", z80, &len);
+
+		    if (GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
+		    {
+			if (!(fp=fopen(fname,"wb")))
+			{
+			    GUIMessage(eMessageBox,"ERROR",
+			    		"Couldn't create file:\n%s", fname);
+			}
+			else
+			{
+			    while(len--)
+			    {
+			    	fputc(ZX81ReadForDisassem(z80, start++), fp);
+			    }
+
+			    fclose(fp);
+			}
+		    }
+
+		    break;
+		}
+
 		default:
 		    break;
 	    }
@@ -646,41 +715,36 @@ static void DoDisassem(Z80 *z80)
 
 static void DoDisassemFile(Z80 *z80)
 {
-    static char fname[MAX_PATH_BUFF]="";
+    static char fname[MAX_PATH_BUFF]=".";
     FILE *fp;
     Z80Word start;
     Z80Word len;
     Z80Word prev;
-    const char *p;
 
     EnterAddress("Disassemble from?",z80,&start);
     EnterAddress("For how many bytes?",z80,&len);
 
-    p=GUIInputString("To file?",fname);
-
-    if (!strlen(p))
-    	return;
-
-    strcpy(fname,p);
-
-    if (!(fp=fopen(fname,"w")))
+    if (GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
     {
-    	GUIMessage(eMessageBox,"ERROR","Couldn't create file:\n%s",fname);
-	return;
-    }
+	if (!(fp=fopen(fname,"w")))
+	{
+	    GUIMessage(eMessageBox,"ERROR","Couldn't create file:\n%s",fname);
+	    return;
+	}
 
-    prev=len;
-
-    while(len<=prev)
-    {
-    	Z80Word orig=start;
-
-	fprintf(fp,"%4.4x: %s\n",orig,Z80Disassemble(z80,&start));
 	prev=len;
-	len-=(start-orig);
-    }
 
-    fclose(fp);
+	while(len<=prev)
+	{
+	    Z80Word orig=start;
+
+	    fprintf(fp,"%4.4x: %s\n",orig,Z80Disassemble(z80,&start));
+	    prev=len;
+	    len-=(start-orig);
+	}
+
+	fclose(fp);
+    }
 }
 
 

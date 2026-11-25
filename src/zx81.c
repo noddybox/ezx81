@@ -550,12 +550,8 @@ static void VideoHsync(Z80 *z80)
 
     if (!video.in_vsync)
     {
-	/* if (video.row >= mem[MARGIN]) */
-	{
-	    video.x = 0;
-	    video.y++;
-	}
-
+	video.x = 0;
+	video.y++;
 	video.row++;
     }
 
@@ -574,10 +570,15 @@ static void VideoShifter(Z80 *z80, Z80Byte chr)
     int b;
     int v;
 
+    if (video.y >= SCR_H)
+    {
+    	return;
+    }
+
     Z80GetState(z80, &state);
 
     table = state.I << 8;
-    char_row = (video.row - mem[MARGIN]) & 7;
+    char_row = video.row & 7;
 
     v = mem[table + (chr & 0x3f) * 8 + char_row];
 
