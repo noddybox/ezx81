@@ -393,14 +393,20 @@ void DisplayState(Z80 *z80)
     GFXPrintPaper(0, y + 8, GREEN, BLACK, "%s", ZX81Info(z80));
 }
 
-static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w)
+static int EnterAddress(const char *prompt, Z80 *z80, Z80Word *w, int seed)
 {
     const char *p;
     long l;
+    char buff[80] = {0};
 
-    p=GUIInputString(prompt ? prompt : "Address?","");
+    if (seed)
+    {
+    	snprintf(buff, sizeof buff, "0x%4.4x", *w);
+    }
 
-    if (*p)
+    p=GUIInputString(prompt ? prompt : "Address?", buff);
+
+    if (p && *p)
     {
 	if (ExprEval(p,&l,Expand,z80))
 	{
@@ -540,7 +546,7 @@ static void DoDisassem(Z80 *z80)
 
 		case SDLK_RETURN:
 		case SDLK_KP_ENTER:
-		    EnterAddress(NULL,z80,&pc);
+		    EnterAddress(NULL,z80,&pc,FALSE);
 		    break;
 
 		case SDLK_UP:
@@ -602,20 +608,26 @@ static void DoDisassem(Z80 *z80)
 		case 'I':
 		{
 		    char prompt[32];
-		    char *input;
+		    const char *input;
+		    char *copy = NULL;
 
 		    snprintf(prompt, sizeof prompt, "0x%4.4x:",
 		    			(unsigned int)pc);
 
-		    input = StrCopy(GUIInputString(prompt, ""));
+		    input = GUIInputString(prompt, "");
 
-		    if (*input)
+		    if (input)
+		    {
+			copy = StrCopy(input);
+		    }
+
+		    if (copy)
 		    {
 			Z80Word poke = pc;
 			char *save;
 		    	char *p;
 
-			p = strtok_r(input, ",", &save);
+			p = strtok_r(copy, ",", &save);
 
 			while(p)
 			{
@@ -636,7 +648,7 @@ static void DoDisassem(Z80 *z80)
 			}
 		    }
 
-		    free(input);
+		    free(copy);
 		    break;
 		}
 
@@ -644,11 +656,10 @@ static void DoDisassem(Z80 *z80)
 		{
 		    static char fname[MAX_PATH_BUFF]=".";
 		    FILE *fp;
-		    Z80Word start;
+		    Z80Word start = pc;
 
-		    EnterAddress("Load to address?", z80, &start);
-
-		    if (GUIFileSelect("SELECT FILE", TRUE, fname, fname, NULL))
+		    if (EnterAddress("Load to address?", z80, &start, TRUE) &&
+			GUIFileSelect("SELECT FILE", TRUE, fname, fname, NULL))
 		    {
 			if (!(fp=fopen(fname,"rb")))
 			{
@@ -678,13 +689,12 @@ static void DoDisassem(Z80 *z80)
 		{
 		    static char fname[MAX_PATH_BUFF]=".";
 		    FILE *fp;
-		    Z80Word start;
+		    Z80Word start = pc;
 		    Z80Word len;
 
-		    EnterAddress("Save from address?", z80, &start);
-		    EnterAddress("How many bytes?", z80, &len);
-
-		    if (GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
+		    if (EnterAddress("Save from address?", z80, &start, TRUE) &&
+			EnterAddress("How many bytes?", z80, &len, FALSE) &&
+			GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
 		    {
 			if (!(fp=fopen(fname,"wb")))
 			{
@@ -721,10 +731,9 @@ static void DoDisassemFile(Z80 *z80)
     Z80Word len;
     Z80Word prev;
 
-    EnterAddress("Disassemble from?",z80,&start);
-    EnterAddress("For how many bytes?",z80,&len);
-
-    if (GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
+    if (EnterAddress("Disassemble from?",z80,&start,FALSE) &&
+	EnterAddress("For how many bytes?",z80,&len,FALSE) &&
+	GUIFileSelect("SELECT FILE", FALSE, fname, fname, NULL))
     {
 	if (!(fp=fopen(fname,"w")))
 	{
@@ -1022,7 +1031,7 @@ static void PlaybackTrace(Z80 *z80)
 		    break;
 
 		case 'P':
-		    if (EnterAddress("PC to search for?",z80,&pc))
+		    if (EnterAddress("PC to search for?",z80,&pc,FALSE))
 		    {
 			while((rd=fread(&t,sizeof t,1,fp))==1)
 			{
@@ -1069,7 +1078,7 @@ static void DoAddBreakpoint(Z80 *z80)
 
     expr=GUIInputString("Expression?","");
 
-    if (!*expr)
+    if (expr && !*expr)
     	return;
 
     if (ExprEval(expr,&l,Expand,z80))

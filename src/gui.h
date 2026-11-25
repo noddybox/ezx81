@@ -61,7 +61,9 @@ int		GUIMessage(GUIBoxType type,
 			   const char *format,...);
 
 
-/* Enter a string, max 40 characters
+/* Enter a string, max 40 characters.  If escape is pressed then the input is
+   cancelled an NULL returned.  Otherwise the input string is returned.
+   Note the return value is internal static storage.
 */
 const char	*GUIInputString(const char *prompt, const char *orig);
 
